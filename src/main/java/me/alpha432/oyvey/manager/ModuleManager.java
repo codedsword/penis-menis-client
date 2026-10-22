@@ -15,6 +15,16 @@ import me.alpha432.oyvey.features.modules.client.ClickGuiModule;
 import me.alpha432.oyvey.features.modules.client.HudEditorModule;
 import me.alpha432.oyvey.features.modules.client.NotificationsModule;
 import me.alpha432.oyvey.features.modules.combat.KillAuraModule;
+import me.alpha432.oyvey.features.modules.combat.AutoBreezeChargeModule;
+import me.alpha432.oyvey.features.modules.combat.AutoSpearModule;
+import me.alpha432.oyvey.features.modules.combat.AutoTotemModule;
+import me.alpha432.oyvey.features.modules.combat.MaceSwapModule;
+import me.alpha432.oyvey.features.modules.hud.ArrayListHudModule;
+import me.alpha432.oyvey.features.modules.misc.BaseFinderModule;
+import me.alpha432.oyvey.features.modules.movement.SprintModule;
+import me.alpha432.oyvey.features.modules.render.AnimationsModule;
+import me.alpha432.oyvey.features.modules.render.ESPModule;
+import me.alpha432.oyvey.features.modules.render.NameTagsModule;
 import me.alpha432.oyvey.features.modules.combat.CriticalsModule;
 import me.alpha432.oyvey.features.modules.combat.KeyPearlModule;
 import me.alpha432.oyvey.features.modules.hud.CoordinatesHudModule;
@@ -60,8 +70,21 @@ public class ModuleManager implements Jsonable, Util {
         register(new FastAccelModule());
         register(new AntiBotModule());
         register(new MovementFixModule());
+        register(new SprintModule());
+        register(new MaceSwapModule());
+        register(new AutoSpearModule());
+        register(new AutoBreezeChargeModule());
+        register(new AutoTotemModule());
+        register(new BaseFinderModule());
+        register(new ESPModule());
+        register(new NameTagsModule());
+        register(new AnimationsModule());
+        register(new ArrayListHudModule());
 
         LOGGER.info("Registered {} modules", modules.size());
+
+        // on by default, the saved config decides afterwards
+        getModuleByClass(ArrayListHudModule.class).enable();
 
         // Create a command for each module for modules to be configurable via command line
         for (Module module : modules) {

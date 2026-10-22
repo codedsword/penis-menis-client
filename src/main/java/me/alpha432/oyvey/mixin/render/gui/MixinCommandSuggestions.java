@@ -35,7 +35,7 @@ public abstract class MixinCommandSuggestions {
     EditBox input;
 
     @Shadow
-    protected abstract void updateUsageInfo();
+    protected abstract void updateUsageInfo(ParseResults<ClientSuggestionProvider> currentParse, Suggestions suggestions);
 
     @SuppressWarnings("unchecked")
     @Inject(method = "updateCommandInfo", at = @At("RETURN"))
@@ -51,9 +51,9 @@ public abstract class MixinCommandSuggestions {
         currentParse = (ParseResults<ClientSuggestionProvider>) (Object) parse;
         if (suggestions == null || !keepSuggestions) {
             pendingSuggestions = dispatcher.getCompletionSuggestions(parse, input.getCursorPosition());
-            pendingSuggestions.thenRun(() -> {
+            pendingSuggestions.thenAccept(result -> {
                 if (pendingSuggestions.isDone()) {
-                    updateUsageInfo();
+                    updateUsageInfo(currentParse, result);
                 }
             });
         }

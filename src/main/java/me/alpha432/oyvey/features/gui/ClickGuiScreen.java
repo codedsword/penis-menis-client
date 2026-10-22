@@ -11,6 +11,7 @@ import imgui.flag.ImGuiWindowFlags;
 import imgui.type.ImString;
 import me.alpha432.oyvey.OyVey;
 import me.alpha432.oyvey.features.modules.Module;
+import me.alpha432.oyvey.features.modules.client.ClickGuiModule;
 import me.alpha432.oyvey.features.settings.Bind;
 import me.alpha432.oyvey.features.settings.EnumConverter;
 import me.alpha432.oyvey.features.settings.Setting;
@@ -51,6 +52,7 @@ public class ClickGuiScreen extends ImGuiScreen {
     private @Nullable Setting<Bind> listening;
     private float openAnimation;
     private float width = WIDTH, height = HEIGHT;
+    private float scrollTarget;
 
     private ClickGuiScreen() {
         super(Component.literal("OyVey"), null);
@@ -79,7 +81,7 @@ public class ClickGuiScreen extends ImGuiScreen {
         float displayH = ImGui.getIO().getDisplaySizeY();
         width = Math.min(WIDTH, displayW - 40);
         height = Math.min(HEIGHT, displayH - 40);
-        ImGui.setNextWindowPos((displayW - width) / 2, (displayH - height) / 2 + (1 - ease) * 30, ImGuiCond.Appearing);
+        ImGui.setNextWindowPos((displayW - width) / 2, (displayH - height) / 2 + (1 - ease) * 30, ImGuiCond.Always);
         ImGui.setNextWindowSize(width, height, ImGuiCond.Always);
 
         ImGui.pushStyleVar(ImGuiStyleVar.Alpha, ease);
@@ -138,6 +140,7 @@ public class ClickGuiScreen extends ImGuiScreen {
         if (clicked) {
             category = c;
             expanded = null;
+            scrollTarget = 0;
         }
         if (hovered) ImGui.setMouseCursor(ImGuiMouseCursor.Hand);
 
@@ -175,14 +178,15 @@ public class ClickGuiScreen extends ImGuiScreen {
         ImGui.pushStyleVar(ImGuiStyleVar.FramePadding, 10, 6);
         ImGui.pushStyleColor(ImGuiCol.FrameBg, Theme.SURFACE);
         ImGui.setNextItemWidth(searchWidth);
-        ImGui.inputTextWithHint("##search", "Search modules...", search);
+        if (ImGui.inputTextWithHint("##search", "Search modules...", search)) scrollTarget = 0;
         ImGui.popStyleColor();
         ImGui.popStyleVar(2);
 
         ImGui.dummy(0, 4);
         ImGui.pushStyleColor(ImGuiCol.ChildBg, 0);
         ImGui.pushStyleVar(ImGuiStyleVar.WindowPadding, 0, 0);
-        ImGui.beginChild("##modules", 0, 0, false);
+        ImGui.beginChild("##modules", 0, 0, false, ImGuiWindowFlags.NoScrollWithMouse);
+        smoothScroll();
 
         List<Module> modules = query.isEmpty()
                 ? OyVey.moduleManager.getModulesByCategory(category)
@@ -272,6 +276,19 @@ public class ClickGuiScreen extends ImGuiScreen {
         ImGui.dummy(width, 8);
     }
 
+    // ImGui's own wheel handling is disabled for the list, scrolling eases towards a target instead
+    private void smoothScroll() {
+        float wheel = ImGui.getIO().getMouseWheel();
+        if (wheel != 0 && ImGui.isWindowHovered()) {
+            scrollTarget = Math.clamp(scrollTarget - wheel * 70f, 0f, ImGui.getScrollMaxY());
+        }
+        scrollTarget = Math.clamp(scrollTarget, 0f, ImGui.getScrollMaxY());
+        float current = ImGui.getScrollY();
+        if (Math.abs(current - scrollTarget) > 0.5f) {
+            ImGui.setScrollY(current + (scrollTarget - current) * Math.min(1f, ImGui.getIO().getDeltaTime() * 14f));
+        }
+    }
+
     private float settingsHeight(Module module) {
         float h = 20;
         for (Setting<?> setting : module.getSettings()) {
@@ -321,6 +338,13 @@ public class ClickGuiScreen extends ImGuiScreen {
                 }
             }
             if (ImGui.isItemHovered()) ImGui.setMouseCursor(ImGuiMouseCursor.Hand);
+            // pink fill up to the grab, ImGui sliders have no filled track
+            float min = ((Number) setting.getMin()).floatValue(), max = ((Number) setting.getMax()).floatValue();
+            float fraction = max > min ? (((Number) setting.getValue()).floatValue() - min) / (max - min) : 0;
+            float trackX = ImGui.getItemRectMinX(), trackY = ImGui.getItemRectMinY();
+            float trackH = ImGui.getItemRectMaxY() - trackY;
+            draw.addRectFilled(trackX, trackY, trackX + Math.max(trackH, (ImGui.getItemRectMaxX() - trackX) * fraction),
+                    trackY + trackH, Theme.withAlpha(Theme.ACCENT, 0.35f), 6);
             ImGui.popStyleVar(3);
             ImGui.dummy(0, 2);
         } else if (value instanceof Enum<?> e) {
@@ -456,6 +480,8 @@ public class ClickGuiScreen extends ImGuiScreen {
     public void onClose() {
         listening = null;
         super.onClose();
+        ClickGuiModule gui = ClickGuiModule.getInstance();
+        if (gui.isEnabled()) gui.disable();
         OyVey.configManager.save();
     }
 }

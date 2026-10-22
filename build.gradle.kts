@@ -58,6 +58,15 @@ repositories {
 
 loom {
     accessWidenerPath.set(file("src/main/resources/oyvey.accesswidener"))
+
+    runs {
+        named("client") {
+            // fail fast on any broken mixin in dev instead of on first class load
+            vmArg("-Doyvey.mixinAudit=true")
+            // OYVEY_QUICKPLAY="World Name" ./gradlew runClient joins that world directly
+            System.getenv("OYVEY_QUICKPLAY")?.let { programArgs("--quickPlaySingleplayer", it) }
+        }
+    }
 }
 
 dependencies {

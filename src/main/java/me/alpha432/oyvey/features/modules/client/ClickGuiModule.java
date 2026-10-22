@@ -48,6 +48,11 @@ public class ClickGuiModule extends Module {
 
     @Override
     public void onEnable() {
+        // can be enabled by the config before the game is up
+        if (mc.gui == null) {
+            disable();
+            return;
+        }
         if (!(mc.gui.screen() instanceof ClickGuiScreen)) {
             ClickGuiScreen.open(mc.gui.screen());
         }

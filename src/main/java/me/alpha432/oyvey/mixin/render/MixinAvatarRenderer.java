@@ -9,6 +9,9 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import me.alpha432.oyvey.features.modules.render.NameTagsModule;
+import net.minecraft.world.entity.player.Player;
 
 import static me.alpha432.oyvey.util.traits.Util.mc;
 
@@ -22,5 +25,12 @@ public class MixinAvatarRenderer {
         state.xRot = lerped.xRot();
         state.yRot = 0;
         state.bodyRot = lerped.yRot();
+    }
+
+    @Inject(method = "shouldShowName(Lnet/minecraft/world/entity/Avatar;D)Z", at = @At("HEAD"), cancellable = true)
+    private void hideReplacedNameTags(Avatar avatar, double distanceSq, CallbackInfoReturnable<Boolean> cir) {
+        if (avatar instanceof Player player && NameTagsModule.replaces(player)) {
+            cir.setReturnValue(false);
+        }
     }
 }

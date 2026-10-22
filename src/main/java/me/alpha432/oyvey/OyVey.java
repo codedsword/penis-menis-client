@@ -58,6 +58,11 @@ public class OyVey implements ModInitializer, ClientModInitializer {
         colorManager.init();
         Runtime.getRuntime().addShutdownHook(new Thread(() -> configManager.save()));
 
+        // -Doyvey.mixinAudit=true applies every mixin at startup instead of on first class load
+        if (Boolean.getBoolean("oyvey.mixinAudit")) {
+            org.spongepowered.asm.mixin.MixinEnvironment.getCurrentEnvironment().audit();
+        }
+
         long endTime = System.nanoTime();
 
         LOGGER.info("Initialized {} in {}ms",

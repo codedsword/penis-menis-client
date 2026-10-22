@@ -116,6 +116,22 @@ public class RotationManager implements Util {
         }
     }
 
+    /**
+     * Runs {@code action} with the player temporarily rotated, for packets that carry the
+     * rotation themselves (using items).
+     */
+    public void withRotation(Angles angles, Runnable action) {
+        float yaw = mc.player.getYRot(), pitch = mc.player.getXRot();
+        mc.player.setYRot(angles.yRot());
+        mc.player.setXRot(angles.xRot());
+        try {
+            action.run();
+        } finally {
+            mc.player.setYRot(yaw);
+            mc.player.setXRot(pitch);
+        }
+    }
+
     public Angles getLerpRenderSnapshot(float lerp) {
         if (!updateRender || renderSnapshot0 == null) return null;
         return new Angles(
