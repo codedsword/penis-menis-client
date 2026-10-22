@@ -50,6 +50,7 @@ public class ClickGuiScreen extends ImGuiScreen {
     private @Nullable Module expanded;
     private @Nullable Setting<Bind> listening;
     private float openAnimation;
+    private float width = WIDTH, height = HEIGHT;
 
     private ClickGuiScreen() {
         super(Component.literal("OyVey"), null);
@@ -76,8 +77,10 @@ public class ClickGuiScreen extends ImGuiScreen {
 
         float displayW = ImGui.getIO().getDisplaySizeX();
         float displayH = ImGui.getIO().getDisplaySizeY();
-        ImGui.setNextWindowPos((displayW - WIDTH) / 2, (displayH - HEIGHT) / 2 + (1 - ease) * 30, ImGuiCond.Appearing);
-        ImGui.setNextWindowSize(WIDTH, HEIGHT, ImGuiCond.Always);
+        width = Math.min(WIDTH, displayW - 40);
+        height = Math.min(HEIGHT, displayH - 40);
+        ImGui.setNextWindowPos((displayW - width) / 2, (displayH - height) / 2 + (1 - ease) * 30, ImGuiCond.Appearing);
+        ImGui.setNextWindowSize(width, height, ImGuiCond.Always);
 
         ImGui.pushStyleVar(ImGuiStyleVar.Alpha, ease);
         ImGui.pushStyleVar(ImGuiStyleVar.WindowPadding, 0, 0);
@@ -98,7 +101,7 @@ public class ClickGuiScreen extends ImGuiScreen {
         ImGui.pushStyleColor(ImGuiCol.ChildBg, Theme.SURFACE);
         ImGui.pushStyleVar(ImGuiStyleVar.WindowPadding, 14, 18);
         ImGui.pushStyleVar(ImGuiStyleVar.ChildRounding, Theme.ROUNDING_LARGE);
-        ImGui.beginChild("##sidebar", SIDEBAR, 0, false, ImGuiWindowFlags.NoScrollbar);
+        ImGui.beginChild("##sidebar", SIDEBAR, 0, false, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.AlwaysUseWindowPadding);
 
         ImDrawList draw = ImGui.getWindowDrawList();
         float x = ImGui.getCursorScreenPosX();
@@ -115,7 +118,7 @@ public class ClickGuiScreen extends ImGuiScreen {
             categoryButton(c);
         }
 
-        ImGui.setCursorPosY(HEIGHT - 50);
+        ImGui.setCursorPosY(height - 54);
         ImGui.pushFont(ImGuiImpl.small);
         ImGui.textColored(Theme.TEXT_FAINT, "v" + BuildConfig.VERSION + " · " + BuildConfig.HASH);
         ImGui.textColored(Theme.TEXT_FAINT, OyVey.moduleManager.getModules().size() + " modules");
@@ -157,7 +160,7 @@ public class ClickGuiScreen extends ImGuiScreen {
     private void content() {
         ImGui.pushStyleVar(ImGuiStyleVar.WindowPadding, 20, 18);
         ImGui.pushStyleColor(ImGuiCol.ChildBg, 0);
-        ImGui.beginChild("##content", 0, 0, false, ImGuiWindowFlags.NoScrollbar);
+        ImGui.beginChild("##content", 0, 0, false, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.AlwaysUseWindowPadding);
 
         // header: title + search
         String query = search.get().trim().toLowerCase(Locale.ROOT);
@@ -203,7 +206,7 @@ public class ClickGuiScreen extends ImGuiScreen {
     }
 
     private void moduleCard(Module module) {
-        float width = ImGui.getContentRegionAvailX() - 6;
+        float width = ImGui.getContentRegionAvailX() - 10;
         float x = ImGui.getCursorScreenPosX();
         float y = ImGui.getCursorScreenPosY();
         boolean open = expanded == module;
@@ -227,27 +230,27 @@ public class ClickGuiScreen extends ImGuiScreen {
 
         // header click: left toggles, right expands settings
         ImGui.setCursorScreenPos(x, y);
-        ImGui.invisibleButton("##card_" + module.getName(), width - 60, CARD_HEIGHT);
+        ImGui.invisibleButton("##card_" + module.getName(), width - 82, CARD_HEIGHT);
         if (ImGui.isItemHovered()) ImGui.setMouseCursor(ImGuiMouseCursor.Hand);
         if (ImGui.isItemClicked(0)) module.toggle();
         if (ImGui.isItemClicked(1)) expanded = open ? null : module;
 
         // settings chevron
-        ImGui.setCursorScreenPos(x + width - 60, y);
+        ImGui.setCursorScreenPos(x + width - 82, y);
         if (ImGui.invisibleButton("##expand_" + module.getName(), 26, CARD_HEIGHT)) {
             expanded = open ? null : module;
         }
         boolean chevronHovered = ImGui.isItemHovered();
-        float cx = x + width - 47, cy = y + CARD_HEIGHT / 2;
+        float cx = x + width - 69, cy = y + CARD_HEIGHT / 2;
         int chevronColor = chevronHovered ? Theme.TEXT : Theme.TEXT_FAINT;
         float rot = easeOutCubic(openAnim);
         draw.addLine(cx - 4, cy - 2 + rot * 3, cx, cy + 2 - rot * 3, chevronColor, 1.6f);
         draw.addLine(cx, cy + 2 - rot * 3, cx + 4, cy - 2 + rot * 3, chevronColor, 1.6f);
 
         // toggle switch
-        ImGui.setCursorScreenPos(x + width - 34, y);
-        if (ImGui.invisibleButton("##toggle_" + module.getName(), 30, CARD_HEIGHT)) module.toggle();
-        toggleSwitch(draw, x + width - 52 + 18, y + CARD_HEIGHT / 2 - 9, enabled);
+        ImGui.setCursorScreenPos(x + width - 56, y);
+        if (ImGui.invisibleButton("##toggle_" + module.getName(), 56, CARD_HEIGHT)) module.toggle();
+        toggleSwitch(draw, x + width - 52, y + CARD_HEIGHT / 2 - 9, enabled);
 
         ImGui.setCursorScreenPos(x, y + CARD_HEIGHT);
         if (open || openAnim > 0.01f) {

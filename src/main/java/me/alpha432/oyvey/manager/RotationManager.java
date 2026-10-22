@@ -1,105 +1,125 @@
 package me.alpha432.oyvey.manager;
 
 import me.alpha432.oyvey.event.Stage;
-import me.alpha432.oyvey.event.impl.entity.player.TickEvent;
+import me.alpha432.oyvey.event.impl.entity.player.MovementInputEvent;
 import me.alpha432.oyvey.event.impl.entity.player.TravelEvent;
 import me.alpha432.oyvey.event.impl.entity.player.UpdateWalkingPlayerEvent;
 import me.alpha432.oyvey.event.system.Subscribe;
+import me.alpha432.oyvey.features.modules.movement.MovementFixModule;
+import me.alpha432.oyvey.util.MovementUtil;
 import me.alpha432.oyvey.util.models.Angles;
 import me.alpha432.oyvey.util.traits.Util;
 import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
 import net.minecraft.util.Mth;
+import org.jspecify.annotations.Nullable;
 
-import java.util.*;
-import java.util.function.Predicate;
-
+/**
+ * Silent rotations: the camera never moves, the requested angles are only applied while the
+ * movement packet is built (and, with {@link MovementFixModule}, while the player travels).
+ * <p>
+ * Modules call {@link #rotate} every tick they want to rotate, the highest priority request of
+ * the tick wins. The callback runs right after the rotation has been sent to the server.
+ */
 public class RotationManager implements Util {
-    private final List<Callback> callbacks = new ArrayList<>();
+    private @Nullable Request request;
+    private @Nullable Angles serverAngles;
 
     private boolean updateRender;
     private Angles renderSnapshot, renderSnapshot0;
 
-    private Angles snapshot;
-    private Angles travelSnapshot;
+    private @Nullable Angles travelSnapshot;
+    private @Nullable Angles packetSnapshot;
 
     public RotationManager() {
         EVENT_BUS.register(this);
     }
 
+    public void rotate(Angles angles, int priority, @Nullable Runnable afterSent) {
+        if (request == null || priority >= request.priority()) {
+            request = new Request(new Angles(angles.yRot(), Mth.clamp(angles.xRot(), -90f, 90f)), priority, afterSent);
+        }
+    }
+
+    public void rotate(Angles angles, int priority) {
+        rotate(angles, priority, null);
+    }
+
+    public boolean isRotating() {
+        return request != null;
+    }
+
+    /**
+     * @return the angles the server currently believes we have
+     */
+    public Angles getServerAngles() {
+        if (serverAngles == null) {
+            return new Angles(mc.player.getYRot(), mc.player.getXRot());
+        }
+        return serverAngles;
+    }
+
     @Subscribe(priority = 1000)
-    public void onTickPre(TickEvent.Pre event) {
-        executeCallbacks(callback -> callback.type() == Type.SYNC);
-    }
-
-    @Subscribe
     public void onTravelPre(TravelEvent.Pre event) {
-        if (callbacks.isEmpty())
-            return;
+        MovementFixModule fix = MovementFixModule.getInstance();
+        if (request == null || fix == null || !fix.isEnabled()) return;
 
-        Callback highest = callbacks.stream().max(Comparator.comparing(Callback::priority)).orElseThrow();
-        if (highest.type() == Type.SYNC) {
-            travelSnapshot = new Angles(mc.player.getYRot(), mc.player.getXRot());
-            mc.player.setYRot(highest.angles().yRot());
-            mc.player.setXRot(highest.angles().xRot());
-        }
+        travelSnapshot = new Angles(mc.player.getYRot(), mc.player.getXRot());
+        mc.player.setYRot(request.angles().yRot());
+        mc.player.setXRot(request.angles().xRot());
     }
 
     @Subscribe
+    public void onMovementInput(MovementInputEvent event) {
+        MovementFixModule fix = MovementFixModule.getInstance();
+        if (travelSnapshot == null || fix == null || fix.getMode() != MovementFixModule.Mode.CLASSIC) return;
+        // keep walking where the camera points even though the player is rotated
+        MovementUtil.correctInput(event.getInput(), travelSnapshot.yRot(), mc.player.getYRot());
+    }
+
+    @Subscribe(priority = -1000)
     public void onTravelPost(TravelEvent.Post event) {
-        if (travelSnapshot != null) {
-            mc.player.setYRot(travelSnapshot.yRot());
-            mc.player.setXRot(travelSnapshot.xRot());
-            travelSnapshot = null;
-        }
+        if (travelSnapshot == null) return;
+        mc.player.setYRot(travelSnapshot.yRot());
+        mc.player.setXRot(travelSnapshot.xRot());
+        // baseTick copied the fake angles into the previous rotation, which would make the camera jitter
+        mc.player.yRotO = travelSnapshot.yRot();
+        mc.player.xRotO = travelSnapshot.xRot();
+        travelSnapshot = null;
     }
 
     @Subscribe
     public void onUpdateWalking(UpdateWalkingPlayerEvent event) {
         if (event.getStage() == Stage.PRE) {
-            if (callbacks.isEmpty()) {
+            if (request == null) {
                 updateRenderSnapshot(new Angles(mc.player.getYRot(), mc.player.getXRot()), false);
+                serverAngles = null;
                 return;
             }
-            Callback highest = callbacks.stream().max(Comparator.comparing(Callback::priority)).orElseThrow();
 
-            updateRenderSnapshot(highest.angles(), true);
-
-            snapshot = new Angles(mc.player.getYRot(), mc.player.getXRot());
-            mc.player.setYRot(highest.angles().yRot());
-            mc.player.setXRot(highest.angles().xRot());
-        } else if (snapshot != null) {
-            executeCallbacks(callback -> callback.type() == Type.MOTION);
-
-            mc.player.setYRot(snapshot.yRot());
-            mc.player.setXRot(snapshot.xRot());
-            snapshot = null;
+            Angles angles = request.angles();
+            updateRenderSnapshot(angles, true);
+            packetSnapshot = new Angles(mc.player.getYRot(), mc.player.getXRot());
+            mc.player.setYRot(angles.yRot());
+            mc.player.setXRot(angles.xRot());
+            serverAngles = angles;
+        } else {
+            if (packetSnapshot != null) {
+                mc.player.setYRot(packetSnapshot.yRot());
+                mc.player.setXRot(packetSnapshot.xRot());
+                packetSnapshot = null;
+            }
+            Request sent = request;
+            request = null;
+            if (sent != null && sent.afterSent() != null) {
+                sent.afterSent().run();
+            }
         }
     }
 
-    public void sync(Angles angles, Runnable runnable) {
-        sync(angles, 0, runnable);
-    }
-
-    public void sync(Angles angles, int priority, Runnable runnable) {
-        request(Type.SYNC, angles, priority, runnable);
-    }
-
-    public void motion(Angles angles, Runnable runnable) {
-        motion(angles, 0, runnable);
-    }
-
-    public void motion(Angles angles, int priority, Runnable runnable) {
-        request(Type.MOTION, angles, priority, runnable);
-    }
-
-    public void silent(Angles angles, Runnable runnable) {
-        request(Type.SILENT, angles, 0, runnable);
-    }
-
     public Angles getLerpRenderSnapshot(float lerp) {
-        if (!updateRender) return null;
+        if (!updateRender || renderSnapshot0 == null) return null;
         return new Angles(
-                Mth.lerp(lerp, renderSnapshot0.yRot(), renderSnapshot.yRot()),
+                Mth.rotLerp(lerp, renderSnapshot0.yRot(), renderSnapshot.yRot()),
                 Mth.lerp(lerp, renderSnapshot0.xRot(), renderSnapshot.xRot())
         );
     }
@@ -115,48 +135,12 @@ public class RotationManager implements Util {
         ));
     }
 
-    private void request(Type type, Angles angles, int priority, Runnable runnable) {
-        Callback callback = new Callback(type, angles, priority, runnable);
-        if (type == Type.SILENT) {
-            sendDuplicate(angles.yRot(), angles.xRot());
-            callback.execute();
-        } else {
-            callbacks.add(callback);
-        }
-    }
-
-    private void executeCallbacks(Predicate<Callback> filter) {
-        callbacks.removeIf(callback -> {
-            if (filter.test(callback)) {
-                callback.execute();
-                return true;
-            }
-            return false;
-        });
-    }
-
     private void updateRenderSnapshot(Angles angles, boolean update) {
-        this.renderSnapshot0 = this.renderSnapshot;
+        this.renderSnapshot0 = this.renderSnapshot == null ? angles : this.renderSnapshot;
         this.renderSnapshot = angles;
         this.updateRender = update;
-
-        if (renderSnapshot0 == null || renderSnapshot == null)
-            return;
-
-        if (Mth.abs(renderSnapshot.yRot() - renderSnapshot0.yRot()) > 320) {
-            this.renderSnapshot0 = this.renderSnapshot;
-        }
     }
 
-    record Callback(Type type, Angles angles, int priority, Runnable action) {
-        public void execute() {
-            if (action != null) action.run();
-        }
-    }
-
-    public enum Type {
-        MOTION,
-        SYNC,
-        SILENT
+    private record Request(Angles angles, int priority, @Nullable Runnable afterSent) {
     }
 }

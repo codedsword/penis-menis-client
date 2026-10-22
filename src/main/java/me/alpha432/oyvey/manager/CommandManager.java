@@ -110,4 +110,9 @@ public class CommandManager extends Feature implements Jsonable {
             setCommandPrefix(object.get("prefix").getAsString());
         }
     }
+
+    @Override
+    public String getFileName() {
+        return "commands.json";
+    }
 }

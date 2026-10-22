@@ -22,6 +22,7 @@ public class OyVey implements ModInitializer, ClientModInitializer {
     public static CommandManager commandManager;
     public static ModuleManager moduleManager;
     public static ConfigManager configManager;
+    public static AltManager altManager;
 
     @Override
     public void onInitialize() {
@@ -37,6 +38,7 @@ public class OyVey implements ModInitializer, ClientModInitializer {
         moduleManager = new ModuleManager();
         speedManager = new SpeedManager();
         holeManager = new HoleManager();
+        altManager = new AltManager();
 
         TextUtil.init();
     }
@@ -50,6 +52,7 @@ public class OyVey implements ModInitializer, ClientModInitializer {
         eventManager.init();
         commandManager.init();
         moduleManager.init();
+        altManager.init();
 
         configManager.load();
         colorManager.init();

@@ -135,7 +135,7 @@ public final class ImGuiImpl implements Util {
             if (Files.isRegularFile(override)) {
                 return Files.readAllBytes(override);
             }
-            try (InputStream in = ImGuiImpl.class.getResourceAsStream("/assets/oyvey/fonts/" + bundledName)) {
+            try (InputStream in = ImGuiImpl.class.getResourceAsStream("/assets/oyvey/font/" + bundledName)) {
                 return in == null ? null : in.readAllBytes();
             }
         } catch (Exception e) {
@@ -185,8 +185,9 @@ public final class ImGuiImpl implements Util {
         float displayY = data.getDisplayPosY();
 
         for (int list = 0; list < data.getCmdListsCount(); list++) {
-            ByteBuffer vtx = data.getCmdListVtxBufferData(list).order(ByteOrder.nativeOrder());
-            ByteBuffer idx = data.getCmdListIdxBufferData(list).order(ByteOrder.nativeOrder());
+            // imgui-java hands out both through the same shared buffer, so take copies
+            ByteBuffer vtx = copy(data.getCmdListVtxBufferData(list));
+            ByteBuffer idx = copy(data.getCmdListIdxBufferData(list));
 
             for (int cmd = 0; cmd < data.getCmdListCmdBufferSize(list); cmd++) {
                 int elemCount = data.getCmdListCmdBufferElemCount(list, cmd);
@@ -228,6 +229,12 @@ public final class ImGuiImpl implements Util {
                         RenderPipelines.GUI_TEXTURED, texture, vertices, colors, scale, area, area));
             }
         }
+    }
+
+    private static ByteBuffer copy(ByteBuffer source) {
+        ByteBuffer copy = ByteBuffer.allocate(source.remaining()).order(ByteOrder.nativeOrder());
+        copy.put(source.duplicate());
+        return copy.flip();
     }
 
     private static void updateCursor(GuiGraphicsExtractor graphics) {

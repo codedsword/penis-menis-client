@@ -4,6 +4,7 @@ import me.alpha432.oyvey.event.Stage;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import me.alpha432.oyvey.event.impl.entity.player.MoveEvent;
+import me.alpha432.oyvey.event.impl.entity.player.MovementInputEvent;
 import me.alpha432.oyvey.event.impl.entity.player.TickEvent;
 import me.alpha432.oyvey.event.impl.entity.player.UpdateWalkingPlayerEvent;
 import net.minecraft.client.player.LocalPlayer;
@@ -36,6 +37,11 @@ public class MixinClientPlayerEntity {
     @Inject(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/LocalPlayer;sendPosition()V", shift = At.Shift.AFTER))
     private void tickHook3(CallbackInfo ci) {
         EVENT_BUS.post(new UpdateWalkingPlayerEvent(Stage.POST));
+    }
+
+    @Inject(method = "aiStep", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/ClientInput;tick()V", shift = At.Shift.AFTER))
+    private void movementInputHook(CallbackInfo ci) {
+        EVENT_BUS.post(new MovementInputEvent(((LocalPlayer) (Object) this).input));
     }
 
     @WrapMethod(method = "move")
