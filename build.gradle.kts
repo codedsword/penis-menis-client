@@ -76,11 +76,8 @@ dependencies {
 
     include(implementation("com.github.cattyngmd.catformat:catformat-core:$catformat_version")!!)
 
-    // Dear ImGui, LWJGL itself is provided by Minecraft
+    // Dear ImGui, drawn through Minecraft's own gui renderer so no GL backend is needed
     include(implementation("io.github.spair:imgui-java-binding:$imgui_version")!!)
-    include(implementation("io.github.spair:imgui-java-lwjgl3:$imgui_version") {
-        exclude(group = "org.lwjgl")
-    })
     for (platform in listOf("windows", "linux", "macos")) {
         include(runtimeOnly("io.github.spair:imgui-java-natives-$platform:$imgui_version")!!)
     }
