@@ -1,0 +1,8 @@
+package dev.sinepsinem.util.inventory;
+
+public enum ResultType {
+    HOTBAR,
+    INVENTORY,
+    OFFHAND,
+    NONE
+}

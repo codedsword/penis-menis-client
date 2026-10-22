@@ -1,30 +1,28 @@
 {
   "schemaVersion": 1,
-  "id": "oyvey",
+  "id": "sinepsinem",
   "version": "${version}",
-  "name": "oyvey-ported",
-  "description": "free and opensource client base",
+  "name": "Sinep Sinem Client",
+  "description": "PvP utility client",
   "authors": [
-    "3arthqu4ke",
-    "alpha432",
-    "cattyn"
+    "codedsword"
   ],
   "contact": {
-    "repo": "https://github.com/mioclient/oyvey-ported"
+    "repo": "https://github.com/codedsword/penis-menis-client"
   },
   "license": "MIT",
   "environment": "client",
-  "accessWidener": "oyvey.accesswidener",
+  "accessWidener": "sinepsinem.accesswidener",
   "entrypoints": {
     "main": [
-      "me.alpha432.oyvey.OyVey"
+      "dev.sinepsinem.SinepSinem"
     ],
     "client": [
-      "me.alpha432.oyvey.OyVey"
+      "dev.sinepsinem.SinepSinem"
     ]
   },
   "mixins": [
-    "oyvey.mixins.json"
+    "sinepsinem.mixins.json"
   ],
   "depends": {
     "fabricloader": ">=${loader_version}",

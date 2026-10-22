@@ -1,6 +1,6 @@
-# penis-menis-client
+# Sinep Sinem Client
 
-PvP utility client for Minecraft **26.2** (Fabric), built on the OyVey base.
+PvP utility client for Minecraft **26.2** (Fabric).
 
 ## Building
 
@@ -9,7 +9,7 @@ Needs JDK 25.
 ```sh
 ./gradlew build          # jar ends up in build/libs
 ./gradlew runClient      # dev client, every mixin is audited at startup
-OYVEY_QUICKPLAY="New World" ./gradlew runClient   # straight into a singleplayer world
+SINEPSINEM_QUICKPLAY="New World" ./gradlew runClient   # straight into a singleplayer world
 ```
 
 ## What's in it
@@ -21,7 +21,7 @@ OYVEY_QUICKPLAY="New World" ./gradlew runClient   # straight into a singleplayer
   Vulkan backend of 26.x.
 - Title screen: the Minecraft logo is replaced (`LogoRenderer` mixin) and an **Alt Manager** button
   sits at half the screen width, at `height - button height` (`TitleScreen` mixin). Offline and
-  access token alts, saved to `.minecraft/oyvey/alts.json`.
+  access token alts, saved to `.minecraft/sinepsinem/alts.json`.
 
 **Combat**
 - KillAura: target priority, speed limited and sensitivity snapped silent rotations, ray trace,
@@ -55,6 +55,12 @@ Commands use the `.` prefix, e.g. `.toggle killaura`, `.killaura range 3.5`, `.e
 ## Fonts
 
 Product Sans is proprietary, so the jar ships **Google Sans** (its successor, SIL OFL 1.1, see
-`assets/oyvey/font/ofl.txt`). It is used for ImGui and, through vanilla ttf font providers, for the
-hud and the title screen. If you own Product Sans, drop `ProductSans-Regular.ttf` and
-`ProductSans-Bold.ttf` into `.minecraft/oyvey/fonts/` and the ImGui gui will use those instead.
+`assets/sinepsinem/font/ofl.txt`). It is used for ImGui and, through vanilla ttf font providers, for the
+hud and the title screen.
+
+Both paths rasterize glyphs to bitmap atlases with FreeType using light hinting, which keeps glyph
+shapes intact instead of snapping them to the pixel grid. The ImGui atlas uses ImGui's FreeType
+builder (with embedded bitmap strikes allowed). The vanilla atlases for our fonts are sampled
+bilinearly with a 1px border around every glyph, so the 4x oversampled glyphs are averaged down
+smoothly instead of being point sampled. If you own Product Sans, drop `ProductSans-Regular.ttf` and
+`ProductSans-Bold.ttf` into `.minecraft/sinepsinem/fonts/` and the ImGui gui will use those instead.

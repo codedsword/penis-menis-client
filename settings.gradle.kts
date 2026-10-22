@@ -14,4 +14,4 @@ pluginManagement {
     }
 }
 
-rootProject.name = "oyvey-ported"
+rootProject.name = "sinep-sinem-client"

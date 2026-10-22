@@ -1,0 +1,36 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "dev.sinepsinem.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "mixins": [
+    "network.MixinConnection"
+  ],
+  "client": [
+    "entity.MixinAbstractClientPlayer",
+    "entity.MixinClientPlayerEntity",
+    "entity.MixinEntity",
+    "entity.MixinLivingEntity",
+    "input.MixinKeyboardHandler",
+    "input.MixinMouseHandler",
+    "network.MixinClientPacketListener",
+    "network.MixinMultiPlayerGameMode",
+    "render.MixinAvatarRenderer",
+    "render.MixinChatComponent",
+    "render.MixinDeltaTrackerTimer",
+    "render.MixinItemInHandRenderer",
+    "render.MixinLevelExtractor",
+    "render.MixinMinecraft",
+    "render.MixinSpearAnimations",
+    "render.font.MixinFontTexture",
+    "render.font.MixinNativeImage",
+    "render.font.MixinTrueTypeGlyphProvider",
+    "render.gui.MixinCommandSuggestions",
+    "render.gui.MixinHud",
+    "render.gui.MixinLogoRenderer",
+    "render.gui.MixinTitleScreen"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

@@ -57,14 +57,14 @@ repositories {
 }
 
 loom {
-    accessWidenerPath.set(file("src/main/resources/oyvey.accesswidener"))
+    accessWidenerPath.set(file("src/main/resources/sinepsinem.accesswidener"))
 
     runs {
         named("client") {
             // fail fast on any broken mixin in dev instead of on first class load
-            vmArg("-Doyvey.mixinAudit=true")
-            // OYVEY_QUICKPLAY="World Name" ./gradlew runClient joins that world directly
-            System.getenv("OYVEY_QUICKPLAY")?.let { programArgs("--quickPlaySingleplayer", it) }
+            vmArg("-Dsinepsinem.mixinAudit=true")
+            // SINEPSINEM_QUICKPLAY="World Name" ./gradlew runClient joins that world directly
+            System.getenv("SINEPSINEM_QUICKPLAY")?.let { programArgs("--quickPlaySingleplayer", it) }
         }
     }
 }
