@@ -1,36 +1,26 @@
 package dev.sinepsinem.features.modules.movement;
 
 import dev.sinepsinem.features.modules.Module;
-import dev.sinepsinem.features.settings.Setting;
-import net.minecraft.world.entity.ai.attributes.Attributes;
 
+/**
+ * Walks up blocks by jumping, through vanilla's auto jump. Raising the step height is rejected by
+ * movement simulation.
+ */
 public class StepModule extends Module {
-    private final Setting<Float> height = num("Height", 2f, 1f, 3f);
+    private boolean previous;
 
     public StepModule() {
-        super("Step", "step..", Category.MOVEMENT);
+        super("Step", "Jumps up blocks automatically", Category.MOVEMENT);
     }
-
-    private float prev;
 
     @Override
     public void onEnable() {
-        if (nullCheck()) {
-            prev = 0.6f;
-            return;
-        }
-        prev = mc.player.maxUpStep();
+        previous = mc.options.autoJump().get();
+        mc.options.autoJump().set(true);
     }
 
     @Override
     public void onDisable() {
-        if (nullCheck()) return;
-        mc.player.getAttribute(Attributes.STEP_HEIGHT).setBaseValue(prev);
-    }
-
-    @Override
-    public void onTick() {
-        if (nullCheck()) return;
-        mc.player.getAttribute(Attributes.STEP_HEIGHT).setBaseValue(height.getValue());
+        mc.options.autoJump().set(previous);
     }
 }

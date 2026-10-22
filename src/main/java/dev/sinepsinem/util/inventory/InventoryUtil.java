@@ -4,6 +4,7 @@ import dev.sinepsinem.util.inventory.strategy.HoldingStrategy;
 import dev.sinepsinem.util.inventory.strategy.HotbarStrategy;
 import dev.sinepsinem.util.inventory.strategy.InventoryStrategy;
 import dev.sinepsinem.util.inventory.strategy.SwapStrategy;
+import dev.sinepsinem.util.TickScheduler;
 import dev.sinepsinem.util.traits.Util;
 import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.item.Item;
@@ -16,7 +17,7 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 public final class InventoryUtil implements Util {
-    static final Result NONE = new Result(-1, ItemStack.EMPTY, ResultType.NONE);
+    public static final Result NONE = new Result(-1, ItemStack.EMPTY, ResultType.NONE);
 
     public static final EnumSet<ResultType> HOTBAR_SCOPE = EnumSet.of(ResultType.OFFHAND, ResultType.HOTBAR);
     public static final EnumSet<ResultType> INVENTORY_SCOPE = EnumSet.of(ResultType.OFFHAND, ResultType.INVENTORY);
@@ -54,7 +55,8 @@ public final class InventoryUtil implements Util {
         int lastSlot = selected();
         if (InventoryUtil.swap(result)) {
             action.accept(result);
-            InventoryUtil.swapBack(result, lastSlot);
+            // a second slot change in the same tick is something a player cannot do
+            TickScheduler.nextTick(() -> InventoryUtil.swapBack(result, lastSlot));
         }
     }
 

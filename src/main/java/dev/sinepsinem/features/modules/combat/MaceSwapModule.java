@@ -5,6 +5,7 @@ import dev.sinepsinem.event.system.Subscribe;
 import dev.sinepsinem.features.modules.Module;
 import dev.sinepsinem.features.settings.Setting;
 import dev.sinepsinem.util.EnchantmentUtil;
+import dev.sinepsinem.util.TickScheduler;
 import dev.sinepsinem.util.inventory.InventoryUtil;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
@@ -43,8 +44,10 @@ public class MaceSwapModule extends Module {
     @Subscribe
     public void onAttackPost(AttackEvent.Post event) {
         if (previousSlot == -1) return;
-        if (swapBack.getValue()) InventoryUtil.swap(previousSlot);
+        int slot = previousSlot;
         previousSlot = -1;
+        // one slot change per tick, like a player pressing a number key
+        if (swapBack.getValue()) TickScheduler.nextTick(() -> InventoryUtil.swap(slot));
     }
 
     private int findMace() {

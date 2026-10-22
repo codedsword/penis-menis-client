@@ -39,6 +39,7 @@ public class SinepSinem implements ModInitializer, ClientModInitializer {
         moduleManager = new ModuleManager();
         speedManager = new SpeedManager();
         holeManager = new HoleManager();
+        dev.sinepsinem.util.TickScheduler.init();
         altManager = new AltManager();
 
         TextUtil.init();
