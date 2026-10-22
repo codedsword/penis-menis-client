@@ -8,7 +8,6 @@ import dev.sinepsinem.features.settings.Setting;
 import dev.sinepsinem.util.MathUtil;
 import dev.sinepsinem.util.RotationUtil;
 import dev.sinepsinem.util.TargetUtil;
-import dev.sinepsinem.util.TickScheduler;
 import dev.sinepsinem.util.inventory.InventoryUtil;
 import dev.sinepsinem.util.models.Angles;
 import com.mojang.blaze3d.platform.InputConstants;
@@ -94,10 +93,8 @@ public class AutoSpearModule extends Module {
             InventoryUtil.swap(spearSlot);
         }
 
-        aim(0);
-        // the use packet has to carry the rotation the server already has for us
-        SinepSinem.rotationManager.withRotation(SinepSinem.rotationManager.getServerAngles(),
-                () -> mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND));
+        Angles angles = aim(0);
+        SinepSinem.rotationManager.withRotation(angles, () -> mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND));
         // vanilla releases item use every frame the use key is not held
         mc.options.keyUse.setDown(true);
         charging = 0;
@@ -128,9 +125,7 @@ public class AutoSpearModule extends Module {
         }
         charging = -1;
         if (previousSlot != -1 && mc.player != null) {
-            // not in the same tick as the release
-            int slot = previousSlot;
-            TickScheduler.nextTick(() -> InventoryUtil.swap(slot));
+            InventoryUtil.swap(previousSlot);
         }
         previousSlot = -1;
     }

@@ -6,11 +6,6 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.level.ClipContext;
-import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.HitResult;
-
-import java.util.Optional;
 
 public final class RotationUtil implements Util {
     private RotationUtil() {
@@ -52,13 +47,7 @@ public final class RotationUtil implements Util {
         Vec3 eyes = mc.player.getEyePosition();
         AABB box = entity.getBoundingBox().inflate(entity.getPickRadius());
         if (box.contains(eyes)) return true;
-        Vec3 end = eyes.add(lookVector(angles).scale(range));
-        Optional<Vec3> hit = box.clip(eyes, end);
-        if (hit.isEmpty()) return false;
-        // vanilla never picks an entity behind a block
-        BlockHitResult block = mc.level.clip(new ClipContext(eyes, end, ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE, mc.player));
-        return block.getType() == HitResult.Type.MISS
-                || block.getLocation().distanceToSqr(eyes) > hit.get().distanceToSqr(eyes);
+        return box.clip(eyes, eyes.add(lookVector(angles).scale(range))).isPresent();
     }
 
     /**

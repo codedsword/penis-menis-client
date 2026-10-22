@@ -37,19 +37,12 @@ public class EventManager extends Feature {
         EVENT_BUS.unregister(this);
     }
 
-    // before the movement packet, so packets modules send in onTick pass post checks
-    @Subscribe
-    public void onTickPre(TickEvent.Pre event) {
-        if (nullCheck())
-            return;
-        SinepSinem.moduleManager.onTick();
-    }
-
     @Subscribe
     public void onTick(TickEvent.Post event) {
         if (nullCheck())
             return;
         SinepSinem.speedManager.update();
+        SinepSinem.moduleManager.onTick();
         Set<Integer> dead = new HashSet<>();
         for (Player player : mc.level.players()) {
             if (player == null || player.getHealth() > 0.0F)

@@ -26,30 +26,21 @@ SINEPSINEM_QUICKPLAY="New World" ./gradlew runClient   # straight into a singlep
   access token alts, saved to `.minecraft/sinepsinem/alts.json`.
 
 **Combat**
-- KillAura: target priority, speed limited and sensitivity snapped silent rotations, cooldown or
-  CPS timing. Hits are only sent when the rotation the server already has hits the target within
-  vanilla reach and with line of sight.
+- KillAura: target priority, speed limited and sensitivity snapped silent rotations, ray trace,
+  cooldown or CPS timing. Attacks are sent right after the rotation packet.
 - MaceSwap: swaps to a mace for falling hits (picks density or breach), then back.
 - AutoSpear: starts charging a spear while you run at a target and holds the aim for the whole
   charge, using the spear's own speed threshold.
 - AutoBreezeCharge: wind charge at your feet on jump, and right before landing from big falls.
-- Criticals: jumps while KillAura has a target and only lets it hit while falling.
-- AutoTotem: hotbar totems go in with the offhand key, inventory totems only while the inventory
-  is open.
-- KeyPearl.
+- AutoTotem, Criticals, KeyPearl.
 
 **Movement**
-- MovementFix: movement always uses the silent rotation, this picks what your keys do with it
-  (`Classic` while the module is off):
+- MovementFix, for silent rotations:
   - `Classic`: you are moved with the rotation's yaw but your keys are remapped so you still walk
     where the camera looks (the remapped keys are what the server gets).
   - `Penis`: no remapping, you move along the look vector of the silent rotation while the camera
     stays where it is.
-- Sprint, Step (vanilla auto jump).
-
-**Player**
-- NoFall: water bucket clutch, picks the water back up after landing.
-- Velocity: jump reset. FastPlace.
+- Sprint, Step, ReverseStep, FastAccel.
 
 **Render**
 - ArrayList, NameTags, ESP (box or glow), Animations (swing styles, item position/scale, swing
@@ -60,13 +51,6 @@ SINEPSINEM_QUICKPLAY="New World" ./gradlew runClient   # straight into a singlep
   every module that targets or highlights players. The friend system and MCF were removed.
 - BaseFinder: scores loaded chunks by player made block entities (storage, hoppers, signs, ...),
   reports likely bases in chat and outlines them.
-
-**Anticheat**
-
-Everything is built to pass simulation (Grim) and post checks: attacks, item uses and slot changes
-are sent in the same spot of the tick as vanilla (before the movement packet), at most one slot
-change per tick, every action uses the rotation the server already has, and nothing changes physics
-directly (no onGround spoofing, step height or motion edits).
 
 Commands use the `.` prefix, e.g. `.toggle killaura`, `.killaura range 3.5`, `.esp mode glow`.
 

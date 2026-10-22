@@ -14,6 +14,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
+import static dev.sinepsinem.util.inventory.InventoryUtil.FULL_SCOPE;
 import static dev.sinepsinem.util.inventory.InventoryUtil.HOTBAR_SCOPE;
 
 /**
@@ -24,11 +25,10 @@ public class AutoBreezeChargeModule extends Module {
     private final Setting<Mode> mode = mode("Mode", Mode.BOTH);
     private final Setting<Float> clutchFall = num("ClutchFall", 4.0f, 2.0f, 30.0f);
     private final Setting<Integer> clutchTicks = num("ClutchTicks", 3, 1, 8);
+    private final Setting<Boolean> inventory = bool("Inventory", false);
 
     private boolean wasJumping;
     private boolean clutched;
-    // aimed down last tick, throw this tick
-    private boolean throwPending;
 
     public AutoBreezeChargeModule() {
         super("AutoBreezeCharge", "Wind charge jumps and fall clutches", Category.COMBAT);
@@ -39,11 +39,6 @@ public class AutoBreezeChargeModule extends Module {
     @Subscribe
     public void onTick(TickEvent.Pre event) {
         if (nullCheck() || mc.gui.screen() != null) return;
-
-        if (throwPending) {
-            throwPending = false;
-            throwCharge();
-        }
 
         boolean jumping = mc.options.keyJump.isDown();
         boolean boost = mode.getValue() != Mode.CLUTCH && jumping && !wasJumping && mc.player.onGround();
@@ -58,30 +53,19 @@ public class AutoBreezeChargeModule extends Module {
                 && !mc.player.onGround()
                 && mc.player.fallDistance >= clutchFall.getValue()
                 && fallSpeed > 0.3
-                // one extra tick, the throw happens on the tick after aiming
-                && distanceToGround() / fallSpeed <= clutchTicks.getValue() + 1;
+                && distanceToGround() / fallSpeed <= clutchTicks.getValue();
 
         if (clutch) clutched = true;
-        if ((boost || clutch) && findCharge().found()) {
-            // the server checks the throw against the rotation it already has, so aim first
-            SinepSinem.rotationManager.rotate(new Angles(SinepSinem.rotationManager.getServerAngles().yRot(), 90f), 50);
-            throwPending = true;
-        }
+        if (boost || clutch) throwDown();
     }
 
-    private void throwCharge() {
-        Result result = findCharge();
-        if (!result.found()) return;
-        Angles server = SinepSinem.rotationManager.getServerAngles();
-        // keep looking down while the charge leaves our hand
-        SinepSinem.rotationManager.rotate(server, 50);
-        InventoryUtil.withSwap(result, () ->
-                SinepSinem.rotationManager.withRotation(server, () -> mc.gameMode.useItem(mc.player, result.hand())));
-    }
+    private void throwDown() {
+        Result result = InventoryUtil.find(Items.WIND_CHARGE, inventory.getValue() ? FULL_SCOPE : HOTBAR_SCOPE);
+        if (!result.found() || mc.player.getCooldowns().isOnCooldown(result.stack())) return;
 
-    private Result findCharge() {
-        Result result = InventoryUtil.find(Items.WIND_CHARGE, HOTBAR_SCOPE);
-        return result.found() && !mc.player.getCooldowns().isOnCooldown(result.stack()) ? result : InventoryUtil.NONE;
+        Angles down = new Angles(mc.player.getYRot(), 90f);
+        SinepSinem.rotationManager.rotate(down, 50, () -> InventoryUtil.withSwap(result, () ->
+                SinepSinem.rotationManager.withRotation(down, () -> mc.gameMode.useItem(mc.player, result.hand()))));
     }
 
     private double distanceToGround() {

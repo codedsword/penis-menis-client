@@ -7,7 +7,6 @@ import dev.sinepsinem.event.impl.entity.player.UpdateWalkingPlayerEvent;
 import dev.sinepsinem.event.system.Subscribe;
 import dev.sinepsinem.features.modules.movement.MovementFixModule;
 import dev.sinepsinem.util.MovementUtil;
-import dev.sinepsinem.util.RotationUtil;
 import dev.sinepsinem.util.models.Angles;
 import dev.sinepsinem.util.traits.Util;
 import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
@@ -15,25 +14,15 @@ import net.minecraft.util.Mth;
 import org.jspecify.annotations.Nullable;
 
 /**
- * Silent rotations that stay consistent with the server's movement simulation.
- * <ul>
- *     <li>Modules call {@link #rotate} during {@code TickEvent.Pre}; the highest priority request wins.</li>
- *     <li>The tick's rotation is used for movement (with input correction, see {@link MovementFixModule})
- *     and sent in the same tick's movement packet, which is exactly what the server simulates with.</li>
- *     <li>When nothing requests a rotation the server side aim eases back to the camera in mouse-like
- *     steps instead of snapping.</li>
- * </ul>
- * Actions that depend on a rotation (attacks, item uses) must happen on the tick after it was sent,
- * check {@link #getServerAngles()}.
+ * Silent rotations: the camera never moves, the requested angles are only applied while the
+ * movement packet is built (and, with {@link MovementFixModule}, while the player travels).
+ * <p>
+ * Modules call {@link #rotate} every tick they want to rotate, the highest priority request of
+ * the tick wins. The callback runs right after the rotation has been sent to the server.
  */
 public class RotationManager implements Util {
-    private static final float RETURN_SPEED = 45.0f;
-
     private @Nullable Request request;
-    // rotation the server holds, null while it matches the camera
     private @Nullable Angles serverAngles;
-    // rotation used for this tick's movement and packet
-    private @Nullable Angles tickAngles;
 
     private boolean updateRender;
     private Angles renderSnapshot, renderSnapshot0;
@@ -45,59 +34,45 @@ public class RotationManager implements Util {
         EVENT_BUS.register(this);
     }
 
-    public void rotate(Angles angles, int priority) {
+    public void rotate(Angles angles, int priority, @Nullable Runnable afterSent) {
         if (request == null || priority >= request.priority()) {
-            request = new Request(new Angles(angles.yRot(), Mth.clamp(angles.xRot(), -90f, 90f)), priority);
+            request = new Request(new Angles(angles.yRot(), Mth.clamp(angles.xRot(), -90f, 90f)), priority, afterSent);
         }
+    }
+
+    public void rotate(Angles angles, int priority) {
+        rotate(angles, priority, null);
     }
 
     public boolean isRotating() {
-        return serverAngles != null;
+        return request != null;
     }
 
     /**
-     * @return the rotation the server currently has for us, i.e. the one from the last movement packet
+     * @return the angles the server currently believes we have
      */
     public Angles getServerAngles() {
-        return serverAngles != null ? serverAngles : cameraAngles();
+        if (serverAngles == null) {
+            return new Angles(mc.player.getYRot(), mc.player.getXRot());
+        }
+        return serverAngles;
     }
 
-    private Angles cameraAngles() {
-        return new Angles(mc.player.getYRot(), mc.player.getXRot());
-    }
-
-    // TickEvent.Pre has finished by now, so every module had its chance to request
     @Subscribe(priority = 1000)
     public void onTravelPre(TravelEvent.Pre event) {
-        tickAngles = resolveTickAngles();
-        request = null;
-        if (tickAngles == null) return;
+        MovementFixModule fix = MovementFixModule.getInstance();
+        if (request == null || fix == null || !fix.isEnabled()) return;
 
-        travelSnapshot = cameraAngles();
-        mc.player.setYRot(tickAngles.yRot());
-        mc.player.setXRot(tickAngles.xRot());
-    }
-
-    private @Nullable Angles resolveTickAngles() {
-        if (request != null) return request.angles();
-        if (serverAngles == null) return null;
-
-        Angles camera = cameraAngles();
-        float yawDiff = Math.abs(Mth.wrapDegrees(camera.yRot() - serverAngles.yRot()));
-        float pitchDiff = Math.abs(camera.xRot() - serverAngles.xRot());
-        if (yawDiff <= RETURN_SPEED && pitchDiff <= RETURN_SPEED) {
-            // close enough to hand back to the camera in one normal sized mouse movement
-            return null;
-        }
-        return RotationUtil.smooth(serverAngles, camera, RETURN_SPEED, RETURN_SPEED);
+        travelSnapshot = new Angles(mc.player.getYRot(), mc.player.getXRot());
+        mc.player.setYRot(request.angles().yRot());
+        mc.player.setXRot(request.angles().xRot());
     }
 
     @Subscribe
     public void onMovementInput(MovementInputEvent event) {
-        if (travelSnapshot == null) return;
         MovementFixModule fix = MovementFixModule.getInstance();
-        // without correction the server simulates our keys with a yaw we did not move with
-        if (fix != null && fix.isEnabled() && fix.getMode() == MovementFixModule.Mode.PENIS) return;
+        if (travelSnapshot == null || fix == null || fix.getMode() != MovementFixModule.Mode.CLASSIC) return;
+        // keep walking where the camera points even though the player is rotated
         MovementUtil.correctInput(event.getInput(), travelSnapshot.yRot(), mc.player.getYRot());
     }
 
@@ -115,21 +90,29 @@ public class RotationManager implements Util {
     @Subscribe
     public void onUpdateWalking(UpdateWalkingPlayerEvent event) {
         if (event.getStage() == Stage.PRE) {
-            if (tickAngles == null) {
-                updateRenderSnapshot(cameraAngles(), false);
+            if (request == null) {
+                updateRenderSnapshot(new Angles(mc.player.getYRot(), mc.player.getXRot()), false);
                 serverAngles = null;
                 return;
             }
 
-            updateRenderSnapshot(tickAngles, true);
-            packetSnapshot = cameraAngles();
-            mc.player.setYRot(tickAngles.yRot());
-            mc.player.setXRot(tickAngles.xRot());
-            serverAngles = tickAngles;
-        } else if (packetSnapshot != null) {
-            mc.player.setYRot(packetSnapshot.yRot());
-            mc.player.setXRot(packetSnapshot.xRot());
-            packetSnapshot = null;
+            Angles angles = request.angles();
+            updateRenderSnapshot(angles, true);
+            packetSnapshot = new Angles(mc.player.getYRot(), mc.player.getXRot());
+            mc.player.setYRot(angles.yRot());
+            mc.player.setXRot(angles.xRot());
+            serverAngles = angles;
+        } else {
+            if (packetSnapshot != null) {
+                mc.player.setYRot(packetSnapshot.yRot());
+                mc.player.setXRot(packetSnapshot.xRot());
+                packetSnapshot = null;
+            }
+            Request sent = request;
+            request = null;
+            if (sent != null && sent.afterSent() != null) {
+                sent.afterSent().run();
+            }
         }
     }
 
@@ -174,6 +157,6 @@ public class RotationManager implements Util {
         this.updateRender = update;
     }
 
-    private record Request(Angles angles, int priority) {
+    private record Request(Angles angles, int priority, @Nullable Runnable afterSent) {
     }
 }

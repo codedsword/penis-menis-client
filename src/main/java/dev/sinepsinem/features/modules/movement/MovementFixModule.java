@@ -4,9 +4,7 @@ import dev.sinepsinem.features.modules.Module;
 import dev.sinepsinem.features.settings.Setting;
 
 /**
- * Picks how movement follows silent rotations. Movement always uses the rotation that is sent to the
- * server (anything else fails simulation checks), this only decides what your keys do with it.
- * Classic is used while the module is off.
+ * Makes movement agree with silent rotations, so the server's movement prediction matches.
  * <ul>
  *     <li>Classic: the player is moved with the rotation's yaw, but the key presses are remapped
  *     so you still walk where the camera is looking.</li>
@@ -20,7 +18,7 @@ public class MovementFixModule extends Module {
     private final Setting<Mode> mode = mode("Mode", Mode.CLASSIC);
 
     public MovementFixModule() {
-        super("MovementFix", "Picks how you move during silent rotations", Category.MOVEMENT);
+        super("MovementFix", "Corrects movement for silent rotations", Category.MOVEMENT);
         INSTANCE = this;
     }
 
