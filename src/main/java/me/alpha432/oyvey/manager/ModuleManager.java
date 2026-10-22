@@ -4,7 +4,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import me.alpha432.oyvey.OyVey;
 import me.alpha432.oyvey.event.impl.render.Render2DEvent;
-import me.alpha432.oyvey.features.gui.OyVeyGui;
+import me.alpha432.oyvey.features.gui.ClickGuiScreen;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen;
 import me.alpha432.oyvey.event.impl.render.Render3DEvent;
@@ -19,7 +19,6 @@ import me.alpha432.oyvey.features.modules.combat.CriticalsModule;
 import me.alpha432.oyvey.features.modules.combat.KeyPearlModule;
 import me.alpha432.oyvey.features.modules.hud.CoordinatesHudModule;
 import me.alpha432.oyvey.features.modules.hud.WatermarkHudModule;
-import me.alpha432.oyvey.features.modules.misc.MCFModule;
 import me.alpha432.oyvey.features.modules.movement.FastAccelModule;
 import me.alpha432.oyvey.features.modules.movement.ReverseStepModule;
 import me.alpha432.oyvey.features.modules.movement.StepModule;
@@ -48,7 +47,6 @@ public class ModuleManager implements Jsonable, Util {
         register(new ClickGuiModule());
         register(new NotificationsModule());
         register(new CriticalsModule());
-        register(new MCFModule());
         register(new StepModule());
         register(new ReverseStepModule());
         register(new FastPlaceModule());
@@ -126,18 +124,18 @@ public class ModuleManager implements Jsonable, Util {
 
     public void onKeyPressed(int key) {
         if (key <= 0) return;
-        if (mc.screen instanceof TitleScreen || mc.screen instanceof JoinMultiplayerScreen) {
+        if (mc.gui.screen() instanceof TitleScreen || mc.gui.screen() instanceof JoinMultiplayerScreen) {
             if (ClickGuiModule.getInstance().getBind().getKey() == key) {
-                OyVeyGui.open(mc.screen);
+                ClickGuiScreen.open(mc.gui.screen());
             }
             return;
         }
-        if (mc.screen != null) return;
+        if (mc.gui.screen() != null) return;
         stream().filter(module -> module.getBind().getKey() == key).forEach(Module::toggle);
     }
 
     public void onMouseClicked(int button) {
-        if (mc.screen != null) return;
+        if (mc.gui.screen() != null) return;
         int key = -button - 2;
         stream().filter(module -> module.getBind().getKey() == key).forEach(Module::toggle);
     }

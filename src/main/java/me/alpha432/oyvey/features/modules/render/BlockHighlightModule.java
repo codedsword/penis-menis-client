@@ -28,7 +28,7 @@ public class BlockHighlightModule extends Module {
             if (shape.isEmpty() || result.getType() == HitResult.Type.MISS) return;
             AABB aabb = shape.bounds();
             aabb = aabb.move(result.getBlockPos());
-            RenderUtil.drawBox(event.getMatrix(), aabb, color.getValue(), lineWidth.getValue());
+            RenderUtil.drawBox(aabb, color.getValue(), lineWidth.getValue());
         }
     }
 

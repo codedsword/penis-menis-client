@@ -32,7 +32,7 @@ public abstract class HudModule extends Module {
         float baseY = mc.getWindow().getGuiScaledHeight() * pos.getValue().y();
         float combined = baseY + getHeight();
 
-        if (mc.screen instanceof ChatScreen) {
+        if (mc.gui.screen() instanceof ChatScreen) {
             baseY = Math.min(combined, heightWithChat) - getHeight();
         }
         return baseY;
@@ -45,7 +45,7 @@ public abstract class HudModule extends Module {
 
     @Subscribe
     public void onMouse(MouseInputEvent e) {
-        if (!(mc.screen instanceof HudEditorScreen) || nullCheck()) return;
+        if (!(mc.gui.screen() instanceof HudEditorScreen) || nullCheck()) return;
 
         if (e.getAction() == 0) {
             button = false;
@@ -59,7 +59,7 @@ public abstract class HudModule extends Module {
     }
 
     protected void render(Render2DEvent e) {
-        if (!(mc.screen instanceof HudEditorScreen) || nullCheck()) return;
+        if (!(mc.gui.screen() instanceof HudEditorScreen) || nullCheck()) return;
 
         float x = getX();
         float y = getY();
@@ -97,7 +97,7 @@ public abstract class HudModule extends Module {
             if (textX + textWidth > mc.getWindow().getGuiScaledWidth()) {
                 textX = x - 5 - textWidth;
             }
-            e.getContext().drawString(mc.font, getName(),
+            e.getContext().text(mc.font, getName(),
                     (int) textX, (int) (y + height / 2f - textHeight / 2f), -1);
             HudEditorScreen.getInstance().anyHover = true;
         }

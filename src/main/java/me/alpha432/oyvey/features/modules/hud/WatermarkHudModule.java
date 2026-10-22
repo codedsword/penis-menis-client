@@ -27,7 +27,7 @@ public class WatermarkHudModule extends HudModule {
         }
 
         Component component = TextUtil.text(watermarkString, text.getValue(), BuildConfig.VERSION);
-        e.getContext().drawString(mc.font, component, (int) getX(), (int) getY(), -1);
+        e.getContext().text(mc.font, component, (int) getX(), (int) getY(), -1);
 
         setWidth(mc.font.width(component));
         setHeight(mc.font.lineHeight);

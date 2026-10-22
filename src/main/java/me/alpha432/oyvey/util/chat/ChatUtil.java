@@ -5,8 +5,9 @@ import me.alpha432.oyvey.ducks.render.IChatComponent;
 import me.alpha432.oyvey.features.commands.Command;
 import me.alpha432.oyvey.util.TextUtil;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.GuiMessage;
-import net.minecraft.client.GuiMessageTag;
+import net.minecraft.client.multiplayer.chat.GuiMessage;
+import net.minecraft.client.multiplayer.chat.GuiMessageSource;
+import net.minecraft.client.multiplayer.chat.GuiMessageTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MessageSignature;
 import net.minecraft.network.chat.MutableComponent;
@@ -44,10 +45,10 @@ public class ChatUtil {
     public static void sendClientSideMessage(Component message, Signature sig) {
         if (Command.nullCheck()) return;
 
-        IChatComponent chat = (IChatComponent) mc.gui.getChat();
+        IChatComponent chat = (IChatComponent) mc.gui.hud.getChat();
         MessageSignature signature = new MessageSignature(sig.getByteSignature());
         chat.oyvey$removeMessage(signature);
-        chat.oyvey$addMessage(new GuiMessage(mc.gui.getGuiTicks(), message, signature, getMessageTag()));
+        chat.oyvey$addMessage(new GuiMessage(mc.gui.hud.getGuiTicks(), message, signature, GuiMessageSource.SYSTEM_CLIENT, getMessageTag()));
     }
 
     public static Component getClientNameComponent() {

@@ -5,7 +5,7 @@ import me.alpha432.oyvey.util.inventory.strategy.HotbarStrategy;
 import me.alpha432.oyvey.util.inventory.strategy.InventoryStrategy;
 import me.alpha432.oyvey.util.inventory.strategy.SwapStrategy;
 import me.alpha432.oyvey.util.traits.Util;
-import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
@@ -41,9 +41,9 @@ public final class InventoryUtil implements Util {
         return mc.player.getInventory().getSelectedSlot();
     }
 
-    public static void click(int slot, int button, ClickType type) {
+    public static void click(int slot, int button, ContainerInput type) {
         int id = mc.player.containerMenu.containerId;
-        mc.gameMode.handleInventoryMouseClick(id, slot, button, type, mc.player);
+        mc.gameMode.handleContainerInput(id, slot, button, type, mc.player);
     }
 
     public static void withSwap(Result result, Runnable action) {

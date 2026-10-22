@@ -2,7 +2,7 @@
   "required": true,
   "minVersion": "0.8",
   "package": "me.alpha432.oyvey.mixin",
-  "compatibilityLevel": "JAVA_21",
+  "compatibilityLevel": "JAVA_25",
   "mixins": [
     "network.MixinConnection"
   ],
@@ -15,9 +15,9 @@
     "render.MixinAvatarRenderer",
     "render.MixinChatComponent",
     "render.MixinDeltaTrackerTimer",
-    "render.MixinLevelRenderer",
+    "render.MixinLevelExtractor",
     "render.gui.MixinCommandSuggestions",
-    "render.gui.MixinGui"
+    "render.gui.MixinHud"
   ],
   "injectors": {
     "defaultRequire": 1

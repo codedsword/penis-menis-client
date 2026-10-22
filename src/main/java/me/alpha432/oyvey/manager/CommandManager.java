@@ -35,7 +35,6 @@ public class CommandManager extends Feature implements Jsonable {
     public void init() {
         register(new BindCommand());
         register(new DrawnCommand());
-        register(new FriendCommand());
         register(new HelpCommand());
         register(new PrefixCommand());
         register(new ToggleCommand());

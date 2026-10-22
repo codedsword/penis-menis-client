@@ -20,7 +20,6 @@ public class OyVey implements ModInitializer, ClientModInitializer {
     public static EventManager eventManager;
     public static SpeedManager speedManager;
     public static CommandManager commandManager;
-    public static FriendManager friendManager;
     public static ModuleManager moduleManager;
     public static ConfigManager configManager;
 
@@ -33,7 +32,6 @@ public class OyVey implements ModInitializer, ClientModInitializer {
         serverManager = new ServerManager();
         rotationManager = new RotationManager();
         positionManager = new PositionManager();
-        friendManager = new FriendManager();
         colorManager = new ColorManager();
         commandManager = new CommandManager();
         moduleManager = new ModuleManager();
@@ -52,7 +50,6 @@ public class OyVey implements ModInitializer, ClientModInitializer {
         eventManager.init();
         commandManager.init();
         moduleManager.init();
-        friendManager.init();
 
         configManager.load();
         colorManager.init();

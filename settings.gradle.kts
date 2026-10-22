@@ -8,7 +8,7 @@ pluginManagement {
     }
 
     plugins {
-        id("fabric-loom") version providers.gradleProperty("loom_version")
+        id("net.fabricmc.fabric-loom") version providers.gradleProperty("loom_version")
         id("com.github.gmazzo.buildconfig") version providers.gradleProperty("buildconfig_version")
         java
     }

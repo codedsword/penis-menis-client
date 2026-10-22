@@ -1,7 +1,7 @@
 package me.alpha432.oyvey.mixin.render;
 
 import me.alpha432.oyvey.ducks.render.IChatComponent;
-import net.minecraft.client.GuiMessage;
+import net.minecraft.client.multiplayer.chat.GuiMessage;
 import net.minecraft.client.gui.components.ChatComponent;
 import net.minecraft.network.chat.MessageSignature;
 import org.spongepowered.asm.mixin.Final;

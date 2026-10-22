@@ -4,7 +4,7 @@ import me.alpha432.oyvey.OyVey;
 import me.alpha432.oyvey.event.impl.ClientEvent;
 import me.alpha432.oyvey.event.system.Subscribe;
 import me.alpha432.oyvey.features.commands.Command;
-import me.alpha432.oyvey.features.gui.OyVeyGui;
+import me.alpha432.oyvey.features.gui.ClickGuiScreen;
 import me.alpha432.oyvey.features.modules.Module;
 import me.alpha432.oyvey.features.settings.Setting;
 import org.lwjgl.glfw.GLFW;
@@ -48,10 +48,9 @@ public class ClickGuiModule extends Module {
 
     @Override
     public void onEnable() {
-        if (nullCheck()) {
-            return;
+        if (!(mc.gui.screen() instanceof ClickGuiScreen)) {
+            ClickGuiScreen.open(mc.gui.screen());
         }
-        mc.setScreen(OyVeyGui.getClickGui());
     }
 
     @Override
@@ -62,7 +61,7 @@ public class ClickGuiModule extends Module {
 
     @Override
     public void onTick() {
-        if (!(ClickGuiModule.mc.screen instanceof OyVeyGui)) {
+        if (!(ClickGuiModule.mc.gui.screen() instanceof ClickGuiScreen)) {
             this.disable();
         }
     }

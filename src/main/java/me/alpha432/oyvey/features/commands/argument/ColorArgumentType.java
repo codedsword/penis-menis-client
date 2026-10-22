@@ -8,11 +8,13 @@ import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import me.alpha432.oyvey.features.commands.CommandExceptions;
 import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.TextColor;
 
 import java.awt.*;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
 
 import static me.alpha432.oyvey.features.commands.ArgumentSuggestions.suggest;
@@ -68,7 +70,7 @@ public final class ColorArgumentType implements ArgumentType<Color> {
 
         ChatFormatting format = parseFormatting(value);
         if (format != null) {
-            return new Color(format.getColor(), false);
+            return new Color(TextColor.fromLegacyFormat(format).getValue(), false);
         }
 
         int[] elements = parseColorElements(reader, value);
@@ -102,8 +104,8 @@ public final class ColorArgumentType implements ArgumentType<Color> {
             else builder.suggest("hsb:");
         } else if (!Character.isDigit(input.charAt(0))){
             return suggest(Arrays.stream(ChatFormatting.values())
-                    .filter(ChatFormatting::isColor)
-                    .map(ChatFormatting::getName), builder);
+                    .filter(f -> TextColor.fromLegacyFormat(f) != null)
+                    .map(f -> f.name().toLowerCase(Locale.ROOT)), builder);
         }
 
         return builder.buildFuture();
@@ -125,8 +127,8 @@ public final class ColorArgumentType implements ArgumentType<Color> {
 
     private ChatFormatting parseFormatting(String value) {
         for (ChatFormatting format : ChatFormatting.values()) {
-            if (!format.isColor()) continue;
-            if (value.equalsIgnoreCase(format.getName())) {
+            if (TextColor.fromLegacyFormat(format) == null) continue;
+            if (value.equalsIgnoreCase(format.name())) {
                 return format;
             }
         }

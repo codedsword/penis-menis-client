@@ -16,7 +16,7 @@ public class VelocityModule extends Module {
         if (nullCheck())
             return;
 
-        if (event.getPacket() instanceof ClientboundSetEntityMotionPacket packet && packet.getId() == mc.player.getId()
+        if (event.getPacket() instanceof ClientboundSetEntityMotionPacket packet && packet.id() == mc.player.getId()
                 || event.getPacket() instanceof ClientboundExplodePacket) {
             event.cancel();
         }

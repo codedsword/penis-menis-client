@@ -1,7 +1,7 @@
 package me.alpha432.oyvey.util;
 
 import dev.cattyn.catformat.CatFormat;
-import dev.cattyn.catformat.fabric.FabricCatFormat;
+import me.alpha432.oyvey.util.text.MinecraftCatFormat;
 import me.alpha432.oyvey.OyVey;
 import net.minecraft.network.chat.MutableComponent;
 
@@ -14,7 +14,7 @@ public final class TextUtil {
 
     public static void init() {
         if (formatter != null) throw new IllegalStateException("Formatter is already initialized");
-        formatter = new FabricCatFormat(true);
+        formatter = new MinecraftCatFormat(true);
         initColors();
     }
 

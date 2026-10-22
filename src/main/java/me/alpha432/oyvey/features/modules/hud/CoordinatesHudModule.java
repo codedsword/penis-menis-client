@@ -33,7 +33,7 @@ public class CoordinatesHudModule extends HudModule {
             }
         }
 
-        e.getContext().drawString(mc.font, coordsStr,
+        e.getContext().text(mc.font, coordsStr,
                 (int) getX(), (int) getY(), -1);
 
         setWidth(mc.font.width(coordsStr));

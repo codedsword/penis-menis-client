@@ -68,7 +68,6 @@ public class KillAuraModule extends Module {
         for (Player entity : mc.level.players()) {
             float dist = entity.distanceTo(mc.player);
             if (entity == mc.player || dist > min) continue;
-            if (OyVey.friendManager.isFriend(entity)) continue;
             target = entity;
             min = dist;
         }

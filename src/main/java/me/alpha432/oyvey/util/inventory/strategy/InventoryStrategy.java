@@ -3,7 +3,7 @@ package me.alpha432.oyvey.util.inventory.strategy;
 import me.alpha432.oyvey.util.inventory.InventoryUtil;
 import me.alpha432.oyvey.util.inventory.Result;
 import me.alpha432.oyvey.util.inventory.ResultType;
-import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.inventory.ContainerInput;
 
 public final class InventoryStrategy implements SwapStrategy {
     public static final InventoryStrategy INSTANCE = new InventoryStrategy();
@@ -16,7 +16,7 @@ public final class InventoryStrategy implements SwapStrategy {
         if (result.type() != ResultType.INVENTORY && result.type() != ResultType.HOTBAR)
             return false;
         int slot = inventorySlot(result);
-        InventoryUtil.click(slot, InventoryUtil.selected(), ClickType.SWAP);
+        InventoryUtil.click(slot, InventoryUtil.selected(), ContainerInput.SWAP);
         return true;
     }
 

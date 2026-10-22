@@ -11,8 +11,10 @@ import me.alpha432.oyvey.event.impl.network.ChatEvent;
 import me.alpha432.oyvey.event.impl.network.PacketEvent;
 import me.alpha432.oyvey.event.impl.render.Render2DEvent;
 import me.alpha432.oyvey.event.impl.render.Render3DEvent;
+import me.alpha432.oyvey.event.impl.render.RenderBlockOutlineEvent;
 import me.alpha432.oyvey.event.system.Subscribe;
 import me.alpha432.oyvey.features.Feature;
+import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
 import net.minecraft.network.protocol.common.ClientboundCustomPayloadPacket;
 import net.minecraft.network.protocol.common.custom.BrandPayload;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -27,6 +29,8 @@ public class EventManager extends Feature {
 
     public void init() {
         EVENT_BUS.register(this);
+        LevelRenderEvents.BEFORE_BLOCK_OUTLINE.register((context, outline) ->
+                !EVENT_BUS.post(new RenderBlockOutlineEvent()));
     }
 
     public void onUnload() {

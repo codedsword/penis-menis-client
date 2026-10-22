@@ -14,7 +14,7 @@ public class HudEditorModule extends Module {
             disable();
             return;
         }
-        mc.setScreen(HudEditorScreen.getInstance());
+        mc.gui.setScreen(HudEditorScreen.getInstance());
         disable();
     }
 }

@@ -1,19 +1,17 @@
 package me.alpha432.oyvey.event.impl.render;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import me.alpha432.oyvey.event.Event;
 
+/**
+ * Posted while the level is being extracted for rendering. 3D drawing is done by emitting
+ * gizmos (see {@link me.alpha432.oyvey.util.render.RenderUtil}), which vanilla renders on
+ * both the OpenGL and Vulkan backends.
+ */
 public class Render3DEvent extends Event {
-    private final PoseStack matrix;
     private final float delta;
 
-    public Render3DEvent(PoseStack matrix, float delta) {
-        this.matrix = matrix;
+    public Render3DEvent(float delta) {
         this.delta = delta;
-    }
-
-    public PoseStack getMatrix() {
-        return matrix;
     }
 
     public float getDelta() {

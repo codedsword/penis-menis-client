@@ -4,12 +4,12 @@ import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.gui.navigation.ScreenRectangle;
 import net.minecraft.client.gui.render.TextureSetup;
-import net.minecraft.client.gui.render.state.GuiElementRenderState;
+import net.minecraft.client.renderer.state.gui.GuiElementRenderState;
 import org.jetbrains.annotations.Nullable;
-import org.joml.Matrix3x2f;
+import org.joml.Matrix3x2fc;
 
-public record RectRenderState(RenderPipeline pipeline, TextureSetup textureSetup, Matrix3x2f pose, int x0, int y0, int x1, int y1, int topLeft, int bottomLeft, int bottomRight, int topRight, @Nullable ScreenRectangle scissorArea, @Nullable ScreenRectangle bounds) implements GuiElementRenderState {
-    public RectRenderState(RenderPipeline renderPipeline, TextureSetup textureSetup, Matrix3x2f matrix3x2f, int x0, int y0, int x1, int y1, int topLeft, int bottomLeft, int bottomRight, int topRight, @Nullable ScreenRectangle screenRectangle) {
+public record RectRenderState(RenderPipeline pipeline, TextureSetup textureSetup, Matrix3x2fc pose, int x0, int y0, int x1, int y1, int topLeft, int bottomLeft, int bottomRight, int topRight, @Nullable ScreenRectangle scissorArea, @Nullable ScreenRectangle bounds) implements GuiElementRenderState {
+    public RectRenderState(RenderPipeline renderPipeline, TextureSetup textureSetup, Matrix3x2fc matrix3x2f, int x0, int y0, int x1, int y1, int topLeft, int bottomLeft, int bottomRight, int topRight, @Nullable ScreenRectangle screenRectangle) {
         this(renderPipeline, textureSetup, matrix3x2f, x0, y0, x1, y1, topLeft, bottomLeft, bottomRight, topRight, screenRectangle, getBounds(x0, y0, x1, y1, matrix3x2f, screenRectangle));
     }
 
@@ -21,7 +21,7 @@ public record RectRenderState(RenderPipeline pipeline, TextureSetup textureSetup
     }
 
     @Nullable
-    private static ScreenRectangle getBounds(int i, int j, int k, int l, Matrix3x2f matrix3x2f, @Nullable ScreenRectangle screenRectangle) {
+    private static ScreenRectangle getBounds(int i, int j, int k, int l, Matrix3x2fc matrix3x2f, @Nullable ScreenRectangle screenRectangle) {
         ScreenRectangle screenRectangle2 = (new ScreenRectangle(i, j, k - i, l - j)).transformMaxBounds(matrix3x2f);
         return screenRectangle != null ? screenRectangle.intersection(screenRectangle2) : screenRectangle2;
     }

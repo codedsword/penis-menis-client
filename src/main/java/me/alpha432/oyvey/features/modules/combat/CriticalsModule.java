@@ -3,7 +3,7 @@ package me.alpha432.oyvey.features.modules.combat;
 import me.alpha432.oyvey.event.impl.network.PacketEvent;
 import me.alpha432.oyvey.event.system.Subscribe;
 import me.alpha432.oyvey.features.modules.Module;
-import net.minecraft.network.protocol.game.ServerboundInteractPacket;
+import net.minecraft.network.protocol.game.ServerboundAttackPacket;
 import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -16,8 +16,8 @@ public class CriticalsModule extends Module {
 
     @Subscribe
     private void onPacketSend(PacketEvent.Send event) {
-        if (event.getPacket() instanceof ServerboundInteractPacket packet && packet.action.getType() == ServerboundInteractPacket.ActionType.ATTACK) {
-            Entity entity = mc.level.getEntity(packet.entityId);
+        if (event.getPacket() instanceof ServerboundAttackPacket packet) {
+            Entity entity = mc.level.getEntity(packet.entityId());
             if (entity == null
                     || entity instanceof EndCrystal
                     || !mc.player.onGround()
