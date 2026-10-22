@@ -4,6 +4,11 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag, e.g. v1.0.0 (created on the selected commit)'
+        required: true
 
 jobs:
   release:
@@ -28,8 +33,10 @@ jobs:
 
       - name: Collect jar
         id: jar
+        env:
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
         run: |
-          version="${GITHUB_REF_NAME#v}"
+          version="${RELEASE_TAG#v}"
           jar=$(ls build/libs/*.jar | grep -v -- '-sources\.jar$' | head -n 1)
           out="sinepsinem-${version}+mc26.2.jar"
           cp "$jar" "$out"
@@ -38,7 +45,9 @@ jobs:
       - name: Publish release
         uses: softprops/action-gh-release@v2
         with:
-          name: Sinep Sinem Client ${{ github.ref_name }}
+          tag_name: ${{ inputs.tag || github.ref_name }}
+          target_commitish: ${{ github.sha }}
+          name: Sinep Sinem Client ${{ inputs.tag || github.ref_name }}
           files: ${{ steps.jar.outputs.file }}
           generate_release_notes: true
           body: |
