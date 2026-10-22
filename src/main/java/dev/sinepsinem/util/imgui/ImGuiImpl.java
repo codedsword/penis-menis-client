@@ -48,6 +48,7 @@ public final class ImGuiImpl implements Util {
     public static final float FONT_SIZE = 17.0f;
 
     private static boolean initialized;
+    private static Throwable failure;
     private static long lastFrame;
     private static DynamicTexture fontTexture;
 
@@ -59,11 +60,22 @@ public final class ImGuiImpl implements Util {
     private ImGuiImpl() {
     }
 
-    public static void ensureInit() {
-        if (initialized) return;
+    /**
+     * @return whether ImGui can be used, false when its native library failed to load
+     */
+    public static boolean ensureInit() {
+        if (initialized || failure != null) return initialized;
+
+        try {
+            ImGuiNatives.prepare();
+            ImGui.createContext();
+        } catch (Throwable t) {
+            failure = t;
+            SinepSinem.LOGGER.error("Dear ImGui is not available on {} {}", System.getProperty("os.name"), System.getProperty("os.arch"), t);
+            return false;
+        }
         initialized = true;
 
-        ImGui.createContext();
         ImGuiIO io = ImGui.getIO();
         io.setIniFilename(null);
         io.setConfigFlags(ImGuiConfigFlags.NavEnableKeyboard);
@@ -84,6 +96,7 @@ public final class ImGuiImpl implements Util {
         loadFonts(io.getFonts());
         Theme.apply();
         lastFrame = System.nanoTime();
+        return true;
     }
 
     private static void loadFonts(ImFontAtlas atlas) {
@@ -170,7 +183,15 @@ public final class ImGuiImpl implements Util {
      * Runs one ImGui frame and submits the result into {@code graphics}.
      */
     public static void frame(GuiGraphicsExtractor graphics, Runnable ui) {
-        ensureInit();
+        if (!ensureInit()) {
+            // never crash the game over the gui, say what is wrong instead
+            String reason = failure.getMessage() == null ? failure.getClass().getSimpleName() : failure.getMessage();
+            graphics.centeredText(mc.font, "The gui could not start on this device (" + System.getProperty("os.arch") + ")",
+                    graphics.guiWidth() / 2, graphics.guiHeight() / 2 - 10, 0xFFE662A3);
+            graphics.centeredText(mc.font, reason.length() > 90 ? reason.substring(0, 90) + "..." : reason,
+                    graphics.guiWidth() / 2, graphics.guiHeight() / 2 + 4, 0xFFA3A3A3);
+            return;
+        }
         ImGuiIO io = ImGui.getIO();
 
         int fbWidth = mc.getWindow().getWidth();

@@ -23,6 +23,10 @@ public abstract class ImGuiScreen extends Screen {
 
     protected abstract void renderImGui();
 
+    public @Nullable Screen getParent() {
+        return parent;
+    }
+
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
         if (parent != null) {

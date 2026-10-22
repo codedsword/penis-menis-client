@@ -4,6 +4,8 @@ import dev.sinepsinem.util.BuildConfig;
 import dev.sinepsinem.util.text.Fonts;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.LogoRenderer;
+import dev.sinepsinem.util.imgui.ImGuiScreen;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.ARGB;
@@ -25,7 +27,10 @@ public class MixinLogoRenderer {
     // replaces the Minecraft logo on the title screen with the client's name
     @Inject(method = "extractRenderState(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IFI)V", at = @At("HEAD"), cancellable = true)
     private void drawClientLogo(GuiGraphicsExtractor graphics, int width, float alpha, int heightOffset, CallbackInfo ci) {
-        if (!(mc.gui.screen() instanceof TitleScreen)) return;
+        // the title screen is also drawn underneath our guis opened from it
+        Screen screen = mc.gui.screen();
+        if (screen instanceof ImGuiScreen gui) screen = gui.getParent();
+        if (!(screen instanceof TitleScreen)) return;
         ci.cancel();
 
         float effectiveAlpha = keepLogoThroughFade ? 1.0f : alpha;

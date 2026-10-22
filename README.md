@@ -19,6 +19,8 @@ SINEPSINEM_QUICKPLAY="New World" ./gradlew runClient   # straight into a singlep
   toggles, inline settings, key binds (click the bind, press a key or mouse button, Esc/Del clears).
 - ImGui output goes through Minecraft's own gui renderer, so it works on both the OpenGL and the
   Vulkan backend of 26.x.
+- Android launchers (MojoLauncher, PojavLauncher) are supported: imgui-java only ships x86_64 linux
+  natives, so the jar bundles its own Android arm64 build, made with `scripts/build-imgui-android.sh`.
 - Title screen: the Minecraft logo is replaced (`LogoRenderer` mixin) and an **Alt Manager** button
   sits at half the screen width, at `height - button height` (`TitleScreen` mixin). Offline and
   access token alts, saved to `.minecraft/sinepsinem/alts.json`.
