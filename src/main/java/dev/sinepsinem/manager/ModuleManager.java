@@ -13,6 +13,7 @@ import dev.sinepsinem.features.commands.ModuleCommand;
 import dev.sinepsinem.features.modules.Module;
 import dev.sinepsinem.features.modules.client.ClickGuiModule;
 import dev.sinepsinem.features.modules.client.HudEditorModule;
+import dev.sinepsinem.features.modules.client.InterfaceModule;
 import dev.sinepsinem.features.modules.client.NotificationsModule;
 import dev.sinepsinem.features.modules.combat.KillAuraModule;
 import dev.sinepsinem.features.modules.combat.AutoBreezeChargeModule;
@@ -24,6 +25,8 @@ import dev.sinepsinem.features.modules.misc.BaseFinderModule;
 import dev.sinepsinem.features.modules.movement.SprintModule;
 import dev.sinepsinem.features.modules.render.AnimationsModule;
 import dev.sinepsinem.features.modules.render.ESPModule;
+import dev.sinepsinem.features.modules.render.GlowParticlesModule;
+import dev.sinepsinem.features.modules.render.TrajectoriesModule;
 import dev.sinepsinem.features.modules.render.NameTagsModule;
 import dev.sinepsinem.features.modules.combat.CriticalsModule;
 import dev.sinepsinem.features.modules.combat.KeyPearlModule;
@@ -80,11 +83,15 @@ public class ModuleManager implements Jsonable, Util {
         register(new NameTagsModule());
         register(new AnimationsModule());
         register(new ArrayListHudModule());
+        register(new InterfaceModule());
+        register(new TrajectoriesModule());
+        register(new GlowParticlesModule());
 
         LOGGER.info("Registered {} modules", modules.size());
 
         // on by default, the saved config decides afterwards
         getModuleByClass(ArrayListHudModule.class).enable();
+        getModuleByClass(InterfaceModule.class).enable();
 
         // Create a command for each module for modules to be configurable via command line
         for (Module module : modules) {

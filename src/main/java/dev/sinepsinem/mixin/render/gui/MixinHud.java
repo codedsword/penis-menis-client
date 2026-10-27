@@ -1,6 +1,8 @@
 package dev.sinepsinem.mixin.render.gui;
 
 import dev.sinepsinem.event.impl.render.Render2DEvent;
+import dev.sinepsinem.event.impl.render.RenderOverlayEvent;
+import dev.sinepsinem.features.gui.hud.CustomHotbar;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.Hud;
@@ -23,6 +25,20 @@ public class MixinHud {
 
         Render2DEvent event = new Render2DEvent(context, tickCounter.getGameTimeDeltaPartialTick(true));
         EVENT_BUS.post(event);
+    }
+
+    @Inject(method = "extractRenderState", at = @At("HEAD"))
+    public void renderOverlay(GuiGraphicsExtractor context, DeltaTracker tickCounter, CallbackInfo ci) {
+        if (mc.player == null || mc.level == null || mc.debugEntries.isOverlayVisible() || mc.gui.hud.isHidden()) return;
+        EVENT_BUS.post(new RenderOverlayEvent(context, tickCounter.getGameTimeDeltaPartialTick(true)));
+    }
+
+    @Inject(method = "extractItemHotbar", at = @At("HEAD"), cancellable = true)
+    private void customHotbar(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker, CallbackInfo ci) {
+        if (CustomHotbar.INSTANCE.isActive()) {
+            CustomHotbar.INSTANCE.extract(graphics, deltaTracker, (HudAccessor) this);
+            ci.cancel();
+        }
     }
 
 }

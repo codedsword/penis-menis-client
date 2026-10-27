@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Enabled modules sorted by width, sliding in and out, in Product Sans.
+ * Enabled modules sorted by width, sliding in and out, in SF Pro.
  */
 public class ArrayListHudModule extends HudModule {
     private final Setting<Color> startColor = color("StartColor", 230, 98, 163, 255);

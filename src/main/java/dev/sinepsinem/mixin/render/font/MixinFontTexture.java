@@ -28,7 +28,7 @@ public abstract class MixinFontTexture extends AbstractTexture {
 
     @Inject(method = "<init>", at = @At("TAIL"))
     private void smoothSampler(Supplier<String> label, GlyphRenderTypes renderTypes, boolean colored, CallbackInfo ci) {
-        // atlases are named after the font, e.g. sinepsinem:product_sans/0
+        // atlases are named after the font, e.g. sinepsinem:sf_pro/0
         sinepsinem$smooth = label.get().startsWith(SinepSinem.MOD_ID + ":");
         if (sinepsinem$smooth) {
             this.sampler = RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR);

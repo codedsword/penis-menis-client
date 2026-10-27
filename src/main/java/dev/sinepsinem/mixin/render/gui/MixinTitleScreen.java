@@ -37,7 +37,7 @@ public abstract class MixinTitleScreen extends Screen {
     @Inject(method = "extractRenderState", at = @At("TAIL"))
     private void drawSession(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a, CallbackInfo ci) {
         Component text = Fonts.text("Logged in as ").withColor(0xFFA3A3A3)
-                .append(Fonts.bold(this.minecraft.getUser().getName()).withColor(0xFFE662A3));
+                .append(Fonts.text(this.minecraft.getUser().getName()).withColor(0xFFE662A3));
         graphics.text(this.font, text, 4, 4, -1, false);
     }
 }

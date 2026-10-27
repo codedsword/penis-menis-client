@@ -2,10 +2,14 @@
   "providers": [
     {
       "type": "ttf",
-      "file": "sinepsinem:productsans-regular.ttf",
+      "file": "sinepsinem:inter-medium.ttf",
       "size": 9,
       "oversample": 4.0,
       "shift": [0.0, 1.0]
+    },
+    {
+      "type": "reference",
+      "id": "minecraft:default"
     }
   ]
 }

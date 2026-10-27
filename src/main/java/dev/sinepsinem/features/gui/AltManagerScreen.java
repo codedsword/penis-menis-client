@@ -93,7 +93,7 @@ public class AltManagerScreen extends ImGuiScreen {
             ImDrawList draw = ImGui.getWindowDrawList();
             draw.addRectFilled(x, y, x + w, y + 44, hovered ? Theme.SURFACE_HOVER : Theme.BACKGROUND, Theme.ROUNDING);
             draw.addRect(x, y, x + w, y + 44, current ? Theme.ACCENT : Theme.BORDER, Theme.ROUNDING, 0, 1);
-            draw.addText(ImGuiImpl.semiBold, 17, x + 12, y + 5, Theme.TEXT, alt.name());
+            draw.addText(ImGuiImpl.regular, 17, x + 12, y + 5, Theme.TEXT, alt.name());
             draw.addText(ImGuiImpl.small, 14, x + 12, y + 24, current ? Theme.ACCENT : Theme.TEXT_FAINT,
                     current ? "Current session" : alt.type() == AltManager.Type.OFFLINE ? "Offline" : "Token");
 
@@ -214,7 +214,7 @@ public class AltManagerScreen extends ImGuiScreen {
         ImGui.pushStyleColor(ImGuiCol.Button, Theme.ACCENT);
         ImGui.pushStyleColor(ImGuiCol.ButtonHovered, Theme.ACCENT_HOVER);
         ImGui.pushStyleColor(ImGuiCol.ButtonActive, Theme.ACCENT_HOVER);
-        ImGui.pushFont(ImGuiImpl.semiBold);
+        ImGui.pushFont(ImGuiImpl.regular);
         boolean clicked = ImGui.button(text, width, 32);
         ImGui.popFont();
         ImGui.popStyleColor(3);

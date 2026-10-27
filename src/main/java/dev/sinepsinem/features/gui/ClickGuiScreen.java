@@ -12,10 +12,13 @@ import imgui.type.ImString;
 import dev.sinepsinem.SinepSinem;
 import dev.sinepsinem.features.modules.Module;
 import dev.sinepsinem.features.modules.client.ClickGuiModule;
+import dev.sinepsinem.features.modules.client.InterfaceModule;
 import dev.sinepsinem.features.settings.Bind;
 import dev.sinepsinem.features.settings.EnumConverter;
 import dev.sinepsinem.features.settings.Setting;
 import dev.sinepsinem.util.BuildConfig;
+import dev.sinepsinem.util.imgui.Draw;
+import dev.sinepsinem.util.imgui.GlowParticles;
 import dev.sinepsinem.util.imgui.ImGuiImpl;
 import dev.sinepsinem.util.imgui.ImGuiScreen;
 import dev.sinepsinem.util.imgui.Theme;
@@ -46,6 +49,7 @@ public class ClickGuiScreen extends ImGuiScreen {
     private final Map<Object, Float> animations = new HashMap<>();
     private final Map<Setting<?>, ImString> textBuffers = new HashMap<>();
     private final ImString search = new ImString(64);
+    private final GlowParticles particles = new GlowParticles();
 
     private Module.Category category = Module.Category.COMBAT;
     private @Nullable Module expanded;
@@ -68,6 +72,7 @@ public class ClickGuiScreen extends ImGuiScreen {
         gui.parent = previous;
         gui.openAnimation = 0;
         gui.listening = null;
+        gui.particles.reseed();
         Minecraft.getInstance().gui.setScreen(gui);
     }
 
@@ -81,11 +86,15 @@ public class ClickGuiScreen extends ImGuiScreen {
         float displayH = ImGui.getIO().getDisplaySizeY();
         width = Math.min(WIDTH, displayW - 40);
         height = Math.min(HEIGHT, displayH - 40);
-        ImGui.setNextWindowPos((displayW - width) / 2, (displayH - height) / 2 + (1 - ease) * 30, ImGuiCond.Always);
+        float windowX = (displayW - width) / 2, windowY = (displayH - height) / 2 + (1 - ease) * 30;
+        backdrop(dt, displayW, displayH, windowX, windowY, ease);
+        ImGui.setNextWindowPos(windowX, windowY, ImGuiCond.Always);
         ImGui.setNextWindowSize(width, height, ImGuiCond.Always);
 
         ImGui.pushStyleVar(ImGuiStyleVar.Alpha, ease);
         ImGui.pushStyleVar(ImGuiStyleVar.WindowPadding, 0, 0);
+        // the window is see through, the glass panel behind it is drawn by backdrop()
+        ImGui.pushStyleColor(ImGuiCol.WindowBg, Theme.withAlpha(Theme.BACKGROUND, 0.55f));
         ImGui.pushFont(ImGuiImpl.regular);
         int flags = ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoCollapse
                 | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse;
@@ -96,11 +105,29 @@ public class ClickGuiScreen extends ImGuiScreen {
         }
         ImGui.end();
         ImGui.popFont();
+        ImGui.popStyleColor();
         ImGui.popStyleVar(2);
     }
 
+    // frosted screen, flying glow particles, and the glass panel the window sits on
+    private void backdrop(float dt, float displayW, float displayH, float windowX, float windowY, float ease) {
+        ImDrawList draw = ImGui.getBackgroundDrawList();
+        float scale = Minecraft.getInstance().getWindow().getGuiScale();
+        InterfaceModule style = InterfaceModule.get();
+
+        Draw.blur(draw, 0, 0, displayW, displayH, 0, 0.85f * ease);
+        // the blur is of the frame without the gui, darken it again
+        draw.addRectFilled(0, 0, displayW, displayH, Theme.rgba(0x000000, Math.round(90 * ease)));
+        if (style == null || style.particles.getValue()) {
+            int count = style == null ? 70 : style.particleCount.getValue();
+            particles.update(dt, displayW, displayH, count, scale, ImGui.getMousePosX(), ImGui.getMousePosY());
+            particles.draw(draw, Theme.ACCENT, ease, scale);
+        }
+        Draw.panel(draw, windowX, windowY, windowX + width, windowY + height, ImGui.getStyle().getWindowRounding(), ease, scale);
+    }
+
     private void sidebar() {
-        ImGui.pushStyleColor(ImGuiCol.ChildBg, Theme.SURFACE);
+        ImGui.pushStyleColor(ImGuiCol.ChildBg, Theme.withAlpha(Theme.SURFACE, 0.7f));
         ImGui.pushStyleVar(ImGuiStyleVar.WindowPadding, 14, 18);
         ImGui.pushStyleVar(ImGuiStyleVar.ChildRounding, Theme.ROUNDING_LARGE);
         ImGui.beginChild("##sidebar", SIDEBAR, 0, false, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.AlwaysUseWindowPadding);
@@ -159,7 +186,7 @@ public class ClickGuiScreen extends ImGuiScreen {
         // accent pill slides in on the selected category
         draw.addRectFilled(x, y + 9, x + 3 * select, y + 25, Theme.ACCENT, 2);
         int textColor = Theme.lerp(Theme.TEXT_DIM, Theme.TEXT, hover);
-        draw.addText(ImGuiImpl.semiBold, 17, x + 12 + 4 * select, y + 8, textColor, c.getName());
+        draw.addText(ImGuiImpl.regular, 17, x + 12 + 4 * select, y + 8, textColor, c.getName());
         int count = SinepSinem.moduleManager.getModulesByCategory(c).size();
         String countText = String.valueOf(count);
         float countWidth = ImGui.calcTextSize(countText).x;
@@ -230,12 +257,12 @@ public class ClickGuiScreen extends ImGuiScreen {
         float hover = animate("hover_" + module.getName(), headerHovered ? 1 : 0, 12);
         float enabled = animate("enabled_" + module.getName(), module.isEnabled() ? 1 : 0, 12);
 
-        int background = Theme.lerp(Theme.SURFACE, Theme.SURFACE_HOVER, hover);
+        int background = Theme.withAlpha(Theme.lerp(Theme.SURFACE, Theme.SURFACE_HOVER, hover), 0.75f);
         int border = Theme.lerp(Theme.BORDER, Theme.withAlpha(Theme.ACCENT, 0.55f), enabled);
         draw.addRectFilled(x, y, x + width, y + height, background, Theme.ROUNDING_LARGE);
         draw.addRect(x, y, x + width, y + height, border, Theme.ROUNDING_LARGE, 0, 1.0f);
 
-        draw.addText(ImGuiImpl.semiBold, 17, x + 16, y + 11, Theme.lerp(Theme.TEXT_DIM, Theme.TEXT, Math.max(enabled, hover)), module.getName());
+        draw.addText(ImGuiImpl.regular, 17, x + 16, y + 11, Theme.lerp(Theme.TEXT_DIM, Theme.TEXT, Math.max(enabled, hover)), module.getName());
         draw.addText(ImGuiImpl.small, 14, x + 16, y + 32, Theme.TEXT_FAINT, module.getDescription());
 
         // header click: left toggles, right expands settings

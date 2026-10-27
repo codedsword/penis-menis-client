@@ -22,7 +22,7 @@ import java.util.Comparator;
 import java.util.List;
 
 /**
- * Screen space name tags in Product Sans, drawn on the hud so they keep a constant size.
+ * Screen space name tags in SF Pro, drawn on the hud so they keep a constant size.
  */
 public class NameTagsModule extends Module {
     private static NameTagsModule INSTANCE;
@@ -69,7 +69,7 @@ public class NameTagsModule extends Module {
     }
 
     private void draw(GuiGraphicsExtractor graphics, Player player, Vector3f screen) {
-        MutableComponent text = Fonts.bold(player.getGameProfile().name()).withColor(0xFFFFFFFF);
+        MutableComponent text = Fonts.text(player.getGameProfile().name()).withColor(0xFFFFFFFF);
         if (health.getValue()) {
             float hp = player.getHealth() + player.getAbsorptionAmount();
             text.append(Fonts.text(String.format(" %.1f", hp)).withColor(healthColor(player)));
