@@ -31,8 +31,15 @@ public class EnumConverter<T extends Enum<T>> extends Converter<T, JsonElement> 
         return (T) clazz.getDeclaringClass().getEnumConstants()[0];
     }
 
+    // W_TAP -> W Tap
     public static <T extends Enum<?>> String getProperName(T clazz) {
-        return Character.toUpperCase(clazz.name().charAt(0)) + clazz.name().toLowerCase().substring(1);
+        StringBuilder name = new StringBuilder();
+        for (String word : clazz.name().split("_")) {
+            if (word.isEmpty()) continue;
+            if (!name.isEmpty()) name.append(' ');
+            name.append(Character.toUpperCase(word.charAt(0))).append(word.substring(1).toLowerCase());
+        }
+        return name.toString();
     }
 
     public JsonElement doForward(Enum anEnum) {

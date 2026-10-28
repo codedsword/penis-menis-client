@@ -67,7 +67,7 @@ public class AltManagerScreen extends ImGuiScreen {
         ImGui.pushFont(ImGuiImpl.small);
         ImGui.textColored(Theme.TEXT_DIM, "Logged in as ");
         ImGui.sameLine(0, 0);
-        ImGui.textColored(Theme.ACCENT, minecraft.getUser().getName());
+        ImGui.textColored(Theme.accent(), minecraft.getUser().getName());
         ImGui.popFont();
     }
 
@@ -92,9 +92,9 @@ public class AltManagerScreen extends ImGuiScreen {
 
             ImDrawList draw = ImGui.getWindowDrawList();
             draw.addRectFilled(x, y, x + w, y + 44, hovered ? Theme.SURFACE_HOVER : Theme.BACKGROUND, Theme.ROUNDING);
-            draw.addRect(x, y, x + w, y + 44, current ? Theme.ACCENT : Theme.BORDER, Theme.ROUNDING, 0, 1);
+            draw.addRect(x, y, x + w, y + 44, current ? Theme.accent() : Theme.BORDER, Theme.ROUNDING, 0, 1);
             draw.addText(ImGuiImpl.regular, 17, x + 12, y + 5, Theme.TEXT, alt.name());
-            draw.addText(ImGuiImpl.small, 14, x + 12, y + 24, current ? Theme.ACCENT : Theme.TEXT_FAINT,
+            draw.addText(ImGuiImpl.small, 14, x + 12, y + 24, current ? Theme.accent() : Theme.TEXT_FAINT,
                     current ? "Current session" : alt.type() == AltManager.Type.OFFLINE ? "Offline" : "Token");
 
             ImGui.sameLine(0, 4);
@@ -203,17 +203,17 @@ public class AltManagerScreen extends ImGuiScreen {
     }
 
     private static boolean segment(String text, boolean selected, float width) {
-        ImGui.pushStyleColor(ImGuiCol.Button, selected ? Theme.ACCENT : Theme.SURFACE);
-        ImGui.pushStyleColor(ImGuiCol.ButtonHovered, selected ? Theme.ACCENT_HOVER : Theme.BORDER);
+        ImGui.pushStyleColor(ImGuiCol.Button, selected ? Theme.accent() : Theme.SURFACE);
+        ImGui.pushStyleColor(ImGuiCol.ButtonHovered, selected ? Theme.accentShade(0.85f) : Theme.BORDER);
         boolean clicked = ImGui.button(text, width, 30);
         ImGui.popStyleColor(2);
         return clicked;
     }
 
     private static boolean accentButton(String text, float width) {
-        ImGui.pushStyleColor(ImGuiCol.Button, Theme.ACCENT);
-        ImGui.pushStyleColor(ImGuiCol.ButtonHovered, Theme.ACCENT_HOVER);
-        ImGui.pushStyleColor(ImGuiCol.ButtonActive, Theme.ACCENT_HOVER);
+        ImGui.pushStyleColor(ImGuiCol.Button, Theme.accent());
+        ImGui.pushStyleColor(ImGuiCol.ButtonHovered, Theme.accentShade(0.85f));
+        ImGui.pushStyleColor(ImGuiCol.ButtonActive, Theme.accentShade(0.85f));
         ImGui.pushFont(ImGuiImpl.regular);
         boolean clicked = ImGui.button(text, width, 32);
         ImGui.popFont();
@@ -223,7 +223,7 @@ public class AltManagerScreen extends ImGuiScreen {
 
     private static void label(String text) {
         ImGui.pushFont(ImGuiImpl.small);
-        ImGui.textColored(Theme.ACCENT, text);
+        ImGui.textColored(Theme.accent(), text);
         ImGui.popFont();
     }
 }

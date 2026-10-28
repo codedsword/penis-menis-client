@@ -83,6 +83,7 @@ public final class ImGuiImpl implements Util {
     /** SF Pro Medium at the body size; everything is Medium, only the sizes differ */
     public static ImFont regular;
     public static ImFont small;
+    public static ImFont heading;
     public static ImFont title;
 
     private ImGuiImpl() {
@@ -178,12 +179,14 @@ public final class ImGuiImpl implements Util {
         }
 
         short[] ranges = atlas.getGlyphRangesCyrillic();
+        byte[] icons = readResource("lucide-icons.ttf");
         if (medium != null) {
-            regular = atlas.addFontFromMemoryTTF(medium, FONT_SIZE, config, ranges);
-            small = atlas.addFontFromMemoryTTF(medium, FONT_SIZE - 3.0f, config, ranges);
-            title = atlas.addFontFromMemoryTTF(medium, FONT_SIZE + 7.0f, config, ranges);
+            regular = addFont(atlas, medium, icons, FONT_SIZE, config, ranges);
+            small = addFont(atlas, medium, icons, FONT_SIZE - 3.0f, config, ranges);
+            heading = addFont(atlas, medium, icons, FONT_SIZE + 2.0f, config, ranges);
+            title = addFont(atlas, medium, icons, FONT_SIZE + 7.0f, config, ranges);
         } else {
-            regular = small = title = atlas.addFontDefault();
+            regular = small = heading = title = atlas.addFontDefault();
         }
         config.destroy();
 
@@ -203,6 +206,32 @@ public final class ImGuiImpl implements Util {
         mc.getTextureManager().register(FONT_TEXTURE, fontTexture);
         atlas.setTexID(TEX_FONT);
         atlas.clearTexData();
+    }
+
+    // the text font with the Lucide icons merged in, so text and icons share one string
+    private static ImFont addFont(ImFontAtlas atlas, byte[] text, byte @Nullable [] icons, float size, ImFontConfig config, short[] ranges) {
+        ImFont font = atlas.addFontFromMemoryTTF(text, size, config, ranges);
+        if (icons != null) {
+            ImFontConfig merge = new ImFontConfig();
+            merge.setMergeMode(true);
+            merge.setPixelSnapH(true);
+            merge.setFontDataOwnedByAtlas(false);
+            merge.setGlyphMinAdvanceX(size);
+            // icons sit on the text baseline otherwise, nudge them to the middle of the line
+            merge.setGlyphOffset(0, size * 0.12f);
+            atlas.addFontFromMemoryTTF(icons, size * 0.95f, merge, Icons.RANGES);
+            merge.destroy();
+        }
+        return font;
+    }
+
+    private static byte @Nullable [] readResource(String name) {
+        try (InputStream in = ImGuiImpl.class.getResourceAsStream("/assets/sinepsinem/font/" + name)) {
+            return in == null ? null : in.readAllBytes();
+        } catch (Exception e) {
+            SinepSinem.LOGGER.error("Failed to load {}", name, e);
+            return null;
+        }
     }
 
     // white, alpha falls off from the center to the edge of the circle
@@ -423,13 +452,24 @@ public final class ImGuiImpl implements Util {
     public static void mouseButton(int button, boolean down) {
         if (!initialized || button < 0 || button > 4) return;
         SCREEN.makeCurrent();
+        mousePosition();
         ImGui.getIO().addMouseButtonEvent(button, down);
     }
 
     public static void mouseScroll(double horizontal, double vertical) {
         if (!initialized) return;
         SCREEN.makeCurrent();
+        mousePosition();
         ImGui.getIO().addMouseWheelEvent((float) horizontal, (float) vertical);
+    }
+
+    // a click must land where the cursor is now, not where it was at the last frame: at low frame
+    // rates a move and a click often arrive between two frames
+    private static void mousePosition() {
+        float scale = mc.getWindow().getGuiScale();
+        ImGui.getIO().addMousePosEvent(
+                (float) (mc.mouseHandler.getScaledXPos(mc.getWindow()) * scale),
+                (float) (mc.mouseHandler.getScaledYPos(mc.getWindow()) * scale));
     }
 
     public static void key(int glfwKey, int modifiers, boolean down) {

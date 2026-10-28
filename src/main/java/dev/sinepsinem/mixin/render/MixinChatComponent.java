@@ -2,6 +2,9 @@ package dev.sinepsinem.mixin.render;
 
 import dev.sinepsinem.ducks.render.IChatComponent;
 import dev.sinepsinem.features.gui.hud.CustomChat;
+import dev.sinepsinem.features.modules.misc.CompactChatModule;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.multiplayer.chat.GuiMessage;
@@ -14,6 +17,7 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
+import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.List;
@@ -37,6 +41,10 @@ public abstract class MixinChatComponent implements IChatComponent {
     private GuiGraphicsExtractor sinepsinem$graphics;
     @Unique
     private boolean sinepsinem$refreshing;
+    @Unique
+    private String sinepsinem$lastText;
+    @Unique
+    private int sinepsinem$repeats;
 
     @Shadow
     private void refreshTrimmedMessages() {}
@@ -89,5 +97,26 @@ public abstract class MixinChatComponent implements IChatComponent {
     @Inject(method = "refreshTrimmedMessages", at = @At("RETURN"))
     private void refreshEnd(CallbackInfo ci) {
         this.sinepsinem$refreshing = false;
+    }
+
+    // the same line again replaces the last one and counts up: "message [x3]"
+    @ModifyVariable(method = "addMessage(Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/MessageSignature;Lnet/minecraft/client/multiplayer/chat/GuiMessageSource;Lnet/minecraft/client/multiplayer/chat/GuiMessageTag;)V",
+            at = @At("HEAD"), argsOnly = true)
+    private Component compactChat(Component contents) {
+        if (!CompactChatModule.active()) {
+            this.sinepsinem$lastText = null;
+            return contents;
+        }
+        String text = contents.getString();
+        if (text.equals(this.sinepsinem$lastText) && !this.allMessages.isEmpty()
+                && this.allMessages.getFirst().content().getString().startsWith(text)) {
+            this.sinepsinem$repeats++;
+            this.allMessages.removeFirst();
+            this.refreshTrimmedMessages();
+            return contents.copy().append(Component.literal(" [x" + this.sinepsinem$repeats + "]").withStyle(ChatFormatting.GRAY));
+        }
+        this.sinepsinem$lastText = text;
+        this.sinepsinem$repeats = 1;
+        return contents;
     }
 }

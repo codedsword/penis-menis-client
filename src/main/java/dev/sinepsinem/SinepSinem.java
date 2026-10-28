@@ -24,6 +24,8 @@ public class SinepSinem implements ModInitializer, ClientModInitializer {
     public static ModuleManager moduleManager;
     public static ConfigManager configManager;
     public static AltManager altManager;
+    public static SessionManager sessionManager;
+    public static ScriptManager scriptManager;
 
     @Override
     public void onInitialize() {
@@ -40,6 +42,8 @@ public class SinepSinem implements ModInitializer, ClientModInitializer {
         speedManager = new SpeedManager();
         holeManager = new HoleManager();
         altManager = new AltManager();
+        sessionManager = new SessionManager();
+        scriptManager = new ScriptManager();
 
         TextUtil.init();
     }
@@ -54,8 +58,11 @@ public class SinepSinem implements ModInitializer, ClientModInitializer {
         commandManager.init();
         moduleManager.init();
         altManager.init();
+        sessionManager.init();
+        scriptManager.init();
 
         configManager.load();
+        moduleManager.onLoad();
         colorManager.init();
         Runtime.getRuntime().addShutdownHook(new Thread(() -> configManager.save()));
 

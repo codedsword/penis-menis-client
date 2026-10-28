@@ -29,12 +29,11 @@ public class ChatUtil {
         return withPrefix(TextUtil.text(string, o));
     }
 
+    // Ambient's prefix: the client name in the accent, then a gray guillemet
     public static MutableComponent withPrefix(Component component) {
         MutableComponent text = Component.empty()
-                .setStyle(Style.EMPTY.withColor(ChatFormatting.GRAY))
-                .append(Component.literal("<"))
                 .append(getClientNameComponent())
-                .append(Component.literal(">"));
+                .append(Component.literal(" \u00bb").withStyle(ChatFormatting.DARK_GRAY));
         if (component != null) text.append(" ").append(component);
         return text;
     }

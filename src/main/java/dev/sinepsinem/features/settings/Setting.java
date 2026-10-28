@@ -21,6 +21,7 @@ public class Setting<T> {
     private Predicate<T> visibility;
     private String description;
     private Feature feature;
+    private String group;
 
     public Setting(String name, T defaultValue) {
         this.name = name;
@@ -279,6 +280,24 @@ public class Setting<T> {
 
     public void setVisibility(Predicate<T> visibility) {
         this.visibility = visibility;
+    }
+
+    /**
+     * Puts this setting into a collapsible group box in the ClickGui, next to the other settings
+     * of the same group.
+     */
+    public Setting<T> group(String group) {
+        this.group = group;
+        return this;
+    }
+
+    public String getGroup() {
+        return group;
+    }
+
+    public Setting<T> describe(String description) {
+        this.description = description;
+        return this;
     }
 
     public boolean isVisible() {

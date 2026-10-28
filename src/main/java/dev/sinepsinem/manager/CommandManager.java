@@ -38,6 +38,7 @@ public class CommandManager extends Feature implements Jsonable {
         register(new HelpCommand());
         register(new PrefixCommand());
         register(new ToggleCommand());
+        register(new ScriptCommand());
 
         LOGGER.info("Registered {} commands", commandList.size());
         SinepSinem.configManager.addConfig(this);

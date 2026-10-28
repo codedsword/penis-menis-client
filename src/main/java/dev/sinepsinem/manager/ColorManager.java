@@ -1,39 +1,32 @@
 package dev.sinepsinem.manager;
 
-import dev.sinepsinem.features.modules.client.ClickGuiModule;
-import dev.sinepsinem.util.ColorUtil;
+import dev.sinepsinem.util.imgui.Theme;
 
-import java.awt.*;
+import java.awt.Color;
 
+/**
+ * The client color everywhere outside ImGui (chat prefix, hud editor), the theme's accent.
+ */
 public class ColorManager {
-    private Color color = new Color(0, 0, 255, 180);
-
     public void init() {
-        ClickGuiModule ui = ClickGuiModule.getInstance();
-        setColor(ui.color.getValue());
     }
 
     public Color getColor() {
-        return this.color;
-    }
-
-    public void setColor(Color color) {
-        this.color = color;
+        return Theme.toColor(Theme.accent());
     }
 
     public int getColorAsInt() {
-        return this.color.getRGB();
+        return Theme.toArgb(Theme.accent());
     }
 
     public int getColorAsIntFullAlpha() {
-        return new Color(this.color.getRed(), this.color.getGreen(), this.color.getBlue(), 255).getRGB();
+        return getColorAsInt() | 0xFF000000;
     }
 
-    public int getColorWithAlpha(float offset, int alpha) {
-        if (ClickGuiModule.getInstance().rainbow.getValue()) {
-            int rgb = ColorUtil.rainbow((int) (offset / 10f * ClickGuiModule.getInstance().rainbowHue.getValue())).getRGB();
-            return (rgb & 0xFFFFFF) | ((alpha & 0xFF) << 24);
-        }
-        return new Color(this.color.getRed(), this.color.getGreen(), this.color.getBlue(), alpha).getRGB();
+    /**
+     * @param t 0 for the accent, 1 for the end of the theme gradient
+     */
+    public int getGradientColor(float t) {
+        return Theme.toArgb(Theme.gradient(t));
     }
 }

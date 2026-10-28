@@ -17,6 +17,7 @@ val loader_version: String by project
 val fabric_version: String by project
 val catformat_version: String by project
 val imgui_version: String by project
+val luaj_version: String by project
 
 val USING_GIT = Paths.get(rootDir.absolutePath).resolve(".git").toFile().exists()
 val GIT_HASH = execute("git rev-parse --short HEAD")
@@ -75,6 +76,9 @@ dependencies {
     implementation("net.fabricmc.fabric-api:fabric-api:$fabric_version")
 
     include(implementation("com.github.cattyngmd.catformat:catformat-core:$catformat_version")!!)
+
+    // Lua 5.2 runtime for user scripts (.script load)
+    include(implementation("org.luaj:luaj-jse:$luaj_version")!!)
 
     // Dear ImGui, drawn through Minecraft's own gui renderer so no GL backend is needed
     include(implementation("io.github.spair:imgui-java-binding:$imgui_version")!!)

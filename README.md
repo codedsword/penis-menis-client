@@ -14,65 +14,105 @@ SINEPSINEM_QUICKPLAY="New World" ./gradlew runClient   # straight into a singlep
 
 ## What's in it
 
-**GUI**
-- ClickGui (Right Shift) drawn with Dear ImGui, styled after legitclient.com. Search, animated
-  toggles, inline settings, key binds (click the bind, press a key or mouse button, Esc/Del clears).
-  It sits on a Kawase blurred glass panel over a frosted backdrop with flying glow particles
-  (they drift up, twinkle, link up when close and dodge the mouse).
-- ImGui output goes through Minecraft's own gui renderer, so it works on both the OpenGL and the
-  Vulkan backend of 26.x. Every user of ImGui gets its own context (the screens, the hotbar, the
-  chat, ...) sharing one font atlas, so several can draw in the same frame.
-- **Interface** module (on by default) holds the look of the client:
-  - Custom hotbar and chat, both `HudElement`s (`features/gui/hud`). Mixins only ask the element
-    whether it is active and hand it vanilla's state; the element draws its chrome through ImGui and
-    leaves items and text to vanilla, so item models, tooltips and chat links keep working.
-    - Hotbar: one glass panel in the vanilla footprint, a selection that glides between slots, the
-      selected item lifted, attack indicator as a ring.
-    - Chat: the per line backgrounds become one blurred panel whose top eases to the oldest
-      visible line, new lines slide in and fade in. The chat screen input box is glass too. All
-      chat drawing goes through vanilla's `ChatGraphicsAccess`, our access sits in front of it.
-  - Kawase blur: dual Kawase (down/up sampling, 1 to 6 passes) of the frame behind the gui, run
-    with our own blaze3d pipelines right before the gui is drawn. Every glass panel samples it.
-  - Glow and tint of the panels, animation smoothness, rounding, gui particle count.
+The look and the module set follow **Ambient** (legitclient.com), recreated from its client
+screenshots: flat near-black panels (`#0F0F0F`, headers `#0A0A0A`), one hot pink accent (`#FF0086`)
+that runs as a gradient into red (`#FF001C`) through the array list, bars and highlights. Other
+themes (Sunset, Ocean, Mint, Custom) are in `ClickGui > Theme`.
+
+**ClickGui** (Right Shift)
+- One floating panel per category (Combat, Ghost, Movement, Render, Player, Misc, Client, Hud,
+  Scripts) with a Lucide icon, drag by the header, collapse with the chevron. Positions are saved.
+- Modules are rows; an enabled one lights up with the accent gradient. Left click toggles, right
+  click (or the chevron) opens its settings inline, middle click hides it from the array list.
+- Settings like Ambient's: toggle switches, sliders with the value on the label line, dropdowns
+  that show the value cut short (`Av...`) and expand into their options, collapsible groups, and a
+  color picker (saturation/value square, hue and alpha bars, hex field with copy and paste).
+- The pencil on a panel switches it to bind mode: rows show their key, click one and press a key.
+- Search bar above the hotbar (typing anywhere goes to it); the eye shows only enabled modules,
+  the cloud saves the config. Descriptions show after hovering a row.
+- Drawn with Dear ImGui through Minecraft's own gui renderer, so it works on both the OpenGL and
+  the Vulkan backend of 26.x. Every ImGui user (screens, hud elements, hotbar, chat) gets its own
+  context, all sharing one font atlas with the icons merged in.
+
+**HUD** (Hud panel, drag in the HudEditor)
+- Watermark (pills with your account and fps, or `Ambient` style text), ArrayList (gradient names,
+  mode suffix, side bar, background), Info (fps, bps, ping, coordinates with the other dimension's),
+  Session Information (head, play time, health bar, kills and deaths), Target HUD (head that flashes
+  when hit, health, gradient bar, distance, winning or losing), Keybinds, Speed Graph, Inventory,
+  Radar, Potions. Name tags are Ambient's pills: health in red, name, distance in blue.
+- Chat messages from the client start with `Sinep Sinem »`.
+- **Interface** module: glass hotbar and chat (`HudElement`s in `features/gui/hud`), Kawase blur
+  behind every panel (dual Kawase with our own blaze3d pipelines), glow, SF Pro everywhere.
+
+**Combat**
+- KillAura: target priority, speed limited and sensitivity snapped silent rotations, ray trace,
+  cooldown or CPS timing. Attacks are sent right after the rotation packet.
+- TargetStrafe: circles the target at a radius, aiming where it will be a few ticks ahead; A/D
+  picks the direction, walls flip it. The radius is drawn as a ring with an edge gradient and a
+  full or striped outline, like Ambient's.
+- MaceSwap, AutoSpear, AutoBreezeCharge, AutoTotem, Criticals, KeyPearl.
+
+**Ghost**
+- Hitboxes: bigger pick boxes for your crosshair. SprintReset: W Tap, S Tap or Sprint after every hit.
+
+**Movement**
+- MovementFix (Classic remaps your keys, Penis moves along the silent rotation), Sprint,
+  KeepSprint (no 60% slowdown or sprint stop on hit), Speed (Strafe bunny hop, Ground), Flight
+  (Vanilla, Motion), NoPush (entities, liquids, blocks), NoDelay (jump delay, miss cooldown), Step,
+  ReverseStep, FastAccel.
+
+**Render**
+- ESP (box or glow), NameTags, StorageESP (glow, box or outline per storage type), Tracers (theme
+  gradient by distance), Animations, BlockHighlight.
+- Trajectories: where a projectile lands and in how many seconds, for what the held item would
+  shoot and for everything already in the air, stepped the way each projectile ticks.
+- GlowParticles: glowing particles around you, behind you and out of everything you hit.
+
+**Player**
+- Velocity, NoFall, FastPlace, AutoTool (best hotbar tool while mining, then back), NoRotate
+  (server teleports keep your camera), AutoRespawn.
+
+**Misc**
+- AntiBot, Teams (scoreboard team, name color or armor color; combat modules skip teammates),
+  AntiCheat (flags other players for speed, flight, invalid rotation and invalid movement:
+  `[AC] Name flagged Speed [x2]`), NickHider (your name is replaced everywhere text is drawn),
+  StaffDetector (staff ranks in the tab list, Experimental also flags spectators), LagAlert (lag
+  backs and server freezes), ClientSpoofer (brand: Vanilla, Lunar, Fabric, Forge, Badlion, Feather),
+  ResourcePackSpoof (reports server packs as loaded without downloading), CompactChat (`[x3]`),
+  BaseFinder.
+
+**Scripts**
+
+Lua 5.2 (LuaJ) scripts in `.minecraft/sinepsinem/scripts`, written against the same kind of API as
+Ambient's, so its examples work too (`ambient` is an alias of `client`):
+
+```lua
+local module = modules.register("API Demo", "Showcases various API features")
+local Minecraft = java.import("net.minecraft.client.Minecraft")
+local mc = Minecraft.getInstance()
+local announce = module:bool("Announce", true)          -- shows up in the ClickGui
+
+module:on("enable", function() print("Hi " .. client.username()) end)
+module:on("game_tick", function(event) ... end)
+module:on("render_2d", function(event) client.text(event, "hello", 4, 40, 0xFFFF0086) end)
+module:on("attack", function(target) return false end)   -- true cancels the hit
+```
+
+Events: `enable`, `disable`, `pre_tick`, `game_tick`, `render_2d`, `render_3d`, `attack`,
+`packet_send`, `packet_receive` (return true to cancel). Settings: `module:bool`, `module:number`,
+`module:text`, each with `:get()` and `:set(v)`. `java.import` gives a class; call statics with a dot
+or a colon, instance methods with a colon. A script that errors turns its module off and says why
+in chat. Loaded scripts load again on the next start.
+
+`.script folder | list | load <file> | reload <file> | unload <file>` (the `.lua` is optional); an
+`example.lua` is put in the folder on first start.
+
+**Other**
 - Android launchers (MojoLauncher, PojavLauncher) are supported: imgui-java only ships x86_64 linux
   natives, so the jar bundles its own Android arm64 build, made with `scripts/build-imgui-android.sh`.
 - Title screen: the Minecraft logo is replaced (`LogoRenderer` mixin) and an **Alt Manager** button
   sits at half the screen width, at `height - button height` (`TitleScreen` mixin). Offline and
   access token alts, saved to `.minecraft/sinepsinem/alts.json`.
-
-**Combat**
-- KillAura: target priority, speed limited and sensitivity snapped silent rotations, ray trace,
-  cooldown or CPS timing. Attacks are sent right after the rotation packet.
-- MaceSwap: swaps to a mace for falling hits (picks density or breach), then back.
-- AutoSpear: starts charging a spear while you run at a target and holds the aim for the whole
-  charge, using the spear's own speed threshold.
-- AutoBreezeCharge: wind charge at your feet on jump, and right before landing from big falls.
-- AutoTotem, Criticals, KeyPearl.
-
-**Movement**
-- MovementFix, for silent rotations:
-  - `Classic`: you are moved with the rotation's yaw but your keys are remapped so you still walk
-    where the camera looks (the remapped keys are what the server gets).
-  - `Penis`: no remapping, you move along the look vector of the silent rotation while the camera
-    stays where it is.
-- Sprint, Step, ReverseStep, FastAccel.
-
-**Render**
-- ArrayList, NameTags, ESP (box or glow), Animations (swing styles, item position/scale, swing
-  speed), BlockHighlight.
-- Trajectories: where a projectile lands and in how many seconds, both for what the held item would
-  shoot (drawn bow, charged crossbow, trident, pearls, potions, snowballs, eggs, experience bottles,
-  wind charges) and for every projectile already in the air. The path is stepped with the same
-  order of gravity, drag and movement as the projectile's own tick; the landing spot gets a glass
-  label with the countdown and what it will hit.
-- GlowParticles: custom glowing particles floating around you, trailing behind you and bursting
-  out of everything you hit, drawn as additive lights and hidden behind walls.
-
-**Misc**
-- AntiBot: tab list, name, duplicate name, ping and age checks. Flagged players are skipped by
-  every module that targets or highlights players. The friend system and MCF were removed.
-- BaseFinder: scores loaded chunks by player made block entities (storage, hoppers, signs, ...),
-  reports likely bases in chat and outlines them.
 
 Commands use the `.` prefix, e.g. `.toggle killaura`, `.killaura range 3.5`, `.esp mode glow`.
 
@@ -91,6 +131,7 @@ vanilla only takes TrueType.
 
 Both paths rasterize glyphs to bitmap atlases with FreeType using light hinting, which keeps glyph
 shapes intact instead of snapping them to the pixel grid. The ImGui atlas uses ImGui's FreeType
-builder (with embedded bitmap strikes allowed). The vanilla atlases for our fonts are sampled
+builder (with embedded bitmap strikes allowed). Icons are Lucide (ISC, `lucide-license.txt`),
+a 10 KB subset merged into every ImGui font. The vanilla atlases for our fonts are sampled
 bilinearly with a 1px border around every glyph, so the 4x oversampled glyphs are averaged down
 smoothly instead of being point sampled.

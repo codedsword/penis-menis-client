@@ -87,9 +87,9 @@ public final class CustomHotbar implements HudElement {
 
             float sx1 = selection * s, sy1 = (y1 + 1) * s, sx2 = (selection + SLOT) * s, sy2 = (y2 - 1) * s;
             float r = Math.max(0, rounding - 1) * s;
-            Draw.glow(draw, ImGuiImpl.TEX_GLOW, sx1, sy1, sx2, sy2, r, 6 * s, Theme.withAlpha(Theme.ACCENT, 0.35f), false);
-            draw.addRectFilled(sx1, sy1, sx2, sy2, Theme.withAlpha(Theme.ACCENT, 0.2f), r);
-            draw.addRect(sx1, sy1, sx2, sy2, Theme.withAlpha(Theme.ACCENT, 0.85f), r, 0, Math.max(1, s * 0.6f));
+            Draw.glow(draw, ImGuiImpl.TEX_GLOW, sx1, sy1, sx2, sy2, r, 6 * s, Theme.withAlpha(Theme.accent(), 0.35f), false);
+            draw.addRectFilled(sx1, sy1, sx2, sy2, Theme.withAlpha(Theme.accent(), 0.2f), r);
+            draw.addRect(sx1, sy1, sx2, sy2, Theme.withAlpha(Theme.accent(), 0.85f), r, 0, Math.max(1, s * 0.6f));
 
             if (offhandAlpha > 0.01f) {
                 Draw.panel(draw, offX * s, y1 * s, (offX + 22) * s, y2 * s, rounding * s, offhandAlpha, s);
@@ -99,7 +99,7 @@ public final class CustomHotbar implements HudElement {
                 float cy = (y1 + y2) / 2 * s, cx = ringX * s, radius = 7 * s;
                 draw.addCircle(cx, cy, radius, Theme.rgba(0xFFFFFF, 40), 32, 2 * s);
                 draw.pathArcTo(cx, cy, radius, (float) -Math.PI / 2, (float) (-Math.PI / 2 + Math.PI * 2 * attack), 32);
-                draw.pathStroke(Theme.ACCENT, 0, 2 * s);
+                draw.pathStroke(Theme.accent(), 0, 2 * s);
             }
             draw.popClipRect();
         });

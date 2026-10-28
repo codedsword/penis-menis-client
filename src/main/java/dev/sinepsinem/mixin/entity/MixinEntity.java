@@ -1,5 +1,7 @@
 package dev.sinepsinem.mixin.entity;
 
+import com.llamalad7.mixinextras.injector.ModifyReturnValue;
+import dev.sinepsinem.features.modules.ghost.HitboxesModule;
 import dev.sinepsinem.features.modules.render.ESPModule;
 import net.minecraft.world.entity.Entity;
 import org.spongepowered.asm.mixin.Mixin;
@@ -16,5 +18,11 @@ public class MixinEntity {
         if (ESPModule.shouldGlow(self)) {
             cir.setReturnValue(ESPModule.glowColor(self));
         }
+    }
+
+    // the crosshair picks entities with their box grown by this
+    @ModifyReturnValue(method = "getPickRadius", at = @At("RETURN"))
+    private float hitboxes(float original) {
+        return original + HitboxesModule.expansion((Entity) (Object) this);
     }
 }

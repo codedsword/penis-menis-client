@@ -11,36 +11,14 @@ import dev.sinepsinem.event.impl.render.Render3DEvent;
 import dev.sinepsinem.features.Feature;
 import dev.sinepsinem.features.commands.ModuleCommand;
 import dev.sinepsinem.features.modules.Module;
-import dev.sinepsinem.features.modules.client.ClickGuiModule;
-import dev.sinepsinem.features.modules.client.HudEditorModule;
-import dev.sinepsinem.features.modules.client.InterfaceModule;
-import dev.sinepsinem.features.modules.client.NotificationsModule;
-import dev.sinepsinem.features.modules.combat.KillAuraModule;
-import dev.sinepsinem.features.modules.combat.AutoBreezeChargeModule;
-import dev.sinepsinem.features.modules.combat.AutoSpearModule;
-import dev.sinepsinem.features.modules.combat.AutoTotemModule;
-import dev.sinepsinem.features.modules.combat.MaceSwapModule;
-import dev.sinepsinem.features.modules.hud.ArrayListHudModule;
-import dev.sinepsinem.features.modules.misc.BaseFinderModule;
-import dev.sinepsinem.features.modules.movement.SprintModule;
-import dev.sinepsinem.features.modules.render.AnimationsModule;
-import dev.sinepsinem.features.modules.render.ESPModule;
-import dev.sinepsinem.features.modules.render.GlowParticlesModule;
-import dev.sinepsinem.features.modules.render.TrajectoriesModule;
-import dev.sinepsinem.features.modules.render.NameTagsModule;
-import dev.sinepsinem.features.modules.combat.CriticalsModule;
-import dev.sinepsinem.features.modules.combat.KeyPearlModule;
-import dev.sinepsinem.features.modules.hud.CoordinatesHudModule;
-import dev.sinepsinem.features.modules.hud.WatermarkHudModule;
-import dev.sinepsinem.features.modules.misc.AntiBotModule;
-import dev.sinepsinem.features.modules.movement.FastAccelModule;
-import dev.sinepsinem.features.modules.movement.MovementFixModule;
-import dev.sinepsinem.features.modules.movement.ReverseStepModule;
-import dev.sinepsinem.features.modules.movement.StepModule;
-import dev.sinepsinem.features.modules.player.FastPlaceModule;
-import dev.sinepsinem.features.modules.player.NoFallModule;
-import dev.sinepsinem.features.modules.player.VelocityModule;
-import dev.sinepsinem.features.modules.render.BlockHighlightModule;
+import dev.sinepsinem.features.modules.client.*;
+import dev.sinepsinem.features.modules.combat.*;
+import dev.sinepsinem.features.modules.ghost.*;
+import dev.sinepsinem.features.modules.hud.*;
+import dev.sinepsinem.features.modules.misc.*;
+import dev.sinepsinem.features.modules.movement.*;
+import dev.sinepsinem.features.modules.player.*;
+import dev.sinepsinem.features.modules.render.*;
 import dev.sinepsinem.util.traits.Jsonable;
 import dev.sinepsinem.util.traits.Util;
 import org.slf4j.Logger;
@@ -54,43 +32,85 @@ public class ModuleManager implements Jsonable, Util {
 
     private final Map<Class<? extends Module>, Module> fastRegistry = new HashMap<>();
     private final List<Module> modules = new ArrayList<>();
+    // the last loaded config, script modules pick their settings from it when they register
+    private JsonObject saved;
 
     public void init() {
-        register(new WatermarkHudModule());
-        register(new CoordinatesHudModule());
-        register(new HudEditorModule());
-        register(new ClickGuiModule());
-        register(new NotificationsModule());
-        register(new CriticalsModule());
-        register(new StepModule());
-        register(new ReverseStepModule());
-        register(new FastPlaceModule());
-        register(new VelocityModule());
-        register(new BlockHighlightModule());
-        register(new NoFallModule());
-        register(new KeyPearlModule());
+        // in panel order, the ClickGui lists every category's modules in the order they are registered
+
+        // combat
         register(new KillAuraModule());
-        register(new FastAccelModule());
-        register(new AntiBotModule());
-        register(new MovementFixModule());
-        register(new SprintModule());
+        register(new TargetStrafeModule());
+        register(new CriticalsModule());
+        register(new AutoTotemModule());
         register(new MaceSwapModule());
         register(new AutoSpearModule());
         register(new AutoBreezeChargeModule());
-        register(new AutoTotemModule());
-        register(new BaseFinderModule());
+        register(new KeyPearlModule());
+        // ghost
+        register(new HitboxesModule());
+        register(new SprintResetModule());
+        // movement
+        register(new SprintModule());
+        register(new MovementFixModule());
+        register(new KeepSprintModule());
+        register(new SpeedModule());
+        register(new FlightModule());
+        register(new StepModule());
+        register(new ReverseStepModule());
+        register(new FastAccelModule());
+        register(new NoPushModule());
+        register(new NoDelayModule());
+        // render
         register(new ESPModule());
         register(new NameTagsModule());
-        register(new AnimationsModule());
-        register(new ArrayListHudModule());
-        register(new InterfaceModule());
+        register(new StorageESPModule());
+        register(new TracersModule());
         register(new TrajectoriesModule());
+        register(new AnimationsModule());
+        register(new BlockHighlightModule());
         register(new GlowParticlesModule());
+        // player
+        register(new VelocityModule());
+        register(new NoFallModule());
+        register(new FastPlaceModule());
+        register(new AutoToolModule());
+        register(new NoRotateModule());
+        register(new AutoRespawnModule());
+        // misc
+        register(new AntiBotModule());
+        register(new TeamsModule());
+        register(new AntiCheatModule());
+        register(new NickHiderModule());
+        register(new StaffDetectorModule());
+        register(new LagAlertModule());
+        register(new ClientSpooferModule());
+        register(new ResourcePackSpoofModule());
+        register(new CompactChatModule());
+        register(new BaseFinderModule());
+        // client
+        register(new ClickGuiModule());
+        register(new InterfaceModule());
+        register(new HudEditorModule());
+        register(new NotificationsModule());
+        // hud
+        register(new WatermarkHudModule());
+        register(new ArrayListHudModule());
+        register(new InfoHudModule());
+        register(new SessionInfoHudModule());
+        register(new TargetHudModule());
+        register(new KeybindsHudModule());
+        register(new SpeedGraphHudModule());
+        register(new InventoryHudModule());
+        register(new RadarHudModule());
+        register(new PotionsHudModule());
 
         LOGGER.info("Registered {} modules", modules.size());
 
         // on by default, the saved config decides afterwards
+        getModuleByClass(WatermarkHudModule.class).enable();
         getModuleByClass(ArrayListHudModule.class).enable();
+        getModuleByClass(TargetHudModule.class).enable();
         getModuleByClass(InterfaceModule.class).enable();
 
         // Create a command for each module for modules to be configurable via command line
@@ -104,6 +124,21 @@ public class ModuleManager implements Jsonable, Util {
     public void register(Module module) {
         getModules().add(module);
         fastRegistry.put(module.getClass(), module);
+    }
+
+    /**
+     * Script modules come and go at runtime, their saved settings wait for them in {@link #saved}.
+     */
+    public void registerScriptModule(Module module) {
+        getModules().add(module);
+        if (saved != null && saved.has(module.getName())) module.fromJson(saved.get(module.getName()));
+    }
+
+    public void unregisterScriptModule(Module module) {
+        if (module.isEnabled()) module.disable();
+        if (saved == null) saved = new JsonObject();
+        saved.add(module.getName(), module.toJson());
+        getModules().remove(module);
     }
 
     public List<Module> getModules() {
@@ -176,7 +211,8 @@ public class ModuleManager implements Jsonable, Util {
 
     @Override
     public JsonElement toJson() {
-        JsonObject object = new JsonObject();
+        // keeps the settings of script modules that are not loaded right now
+        JsonObject object = saved == null ? new JsonObject() : saved.deepCopy();
         for (Module module : getModules()) {
             object.add(module.getName(), module.toJson());
         }
@@ -185,6 +221,7 @@ public class ModuleManager implements Jsonable, Util {
 
     @Override
     public void fromJson(JsonElement element) {
+        saved = element.getAsJsonObject();
         for (Module module : getModules()) {
             module.fromJson(element.getAsJsonObject().get(module.getName()));
         }

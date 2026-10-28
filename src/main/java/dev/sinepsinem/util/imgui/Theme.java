@@ -1,28 +1,90 @@
 package dev.sinepsinem.util.imgui;
 
+import dev.sinepsinem.features.modules.client.ClickGuiModule;
 import imgui.ImGui;
 import imgui.ImGuiStyle;
 import imgui.flag.ImGuiCol;
 
+import java.awt.Color;
+
 /**
- * Palette taken from legitclient.com: near-black neutrals with a pink accent.
+ * Ambient's palette, sampled from its client screenshots: flat near-black panels with a single
+ * accent (a hot pink by default) that also runs as a gradient into a second color for the
+ * array list, bars and highlights. Colors are ImGui's packed ABGR.
  */
 public final class Theme {
-    public static final int ACCENT = rgb(0xE662A3);
-    public static final int ACCENT_HOVER = rgb(0xCE5893);
-    public static final int BACKGROUND = rgb(0x101010);
-    public static final int SURFACE = rgb(0x171717);      // neutral-900
-    public static final int SURFACE_HOVER = rgb(0x1F1F1F);
-    public static final int BORDER = rgb(0x262626);       // neutral-800
-    public static final int MUTED = rgb(0x404040);        // neutral-700
+    public static final int PANEL = rgb(0x0F0F0F);
+    public static final int HEADER = rgb(0x0A0A0A);
+    /** dropdowns, setting groups, text fields */
+    public static final int FIELD = rgb(0x1B1B1B);
+    public static final int FIELD_HOVER = rgb(0x262626);
+    public static final int TRACK = rgb(0x070707);
+    public static final int TOGGLE_OFF = rgb(0x404040);
+    public static final int KNOB_OFF = rgb(0x9F9F9F);
+    public static final int BORDER = rgb(0x262626);
     public static final int TEXT = rgb(0xFFFFFF);
-    public static final int TEXT_DIM = rgb(0xA3A3A3);     // neutral-400
-    public static final int TEXT_FAINT = rgb(0x737373);   // neutral-500
+    public static final int TEXT_DIM = rgb(0xA3A3A3);
+    public static final int TEXT_FAINT = rgb(0x6B6B6B);
 
-    public static final float ROUNDING = 8.0f;
-    public static final float ROUNDING_LARGE = 12.0f;
+    // the older screens (alt manager) were drawn with these names
+    public static final int BACKGROUND = PANEL;
+    public static final int SURFACE = rgb(0x151515);
+    public static final int SURFACE_HOVER = FIELD;
+    public static final int MUTED = TOGGLE_OFF;
+
+    public static final float ROUNDING = 6.0f;
+    public static final float ROUNDING_LARGE = 8.0f;
+
+    private static final int DEFAULT_ACCENT = 0xFF0086;
+    private static final int DEFAULT_SECONDARY = 0xFF001C;
 
     private Theme() {
+    }
+
+    /**
+     * @return the accent color, Ambient pink unless changed in the ClickGui module
+     */
+    public static int accent() {
+        ClickGuiModule gui = ClickGuiModule.getInstance();
+        return rgb(gui == null ? DEFAULT_ACCENT : gui.accentRgb());
+    }
+
+    /**
+     * @return where the accent gradient ends
+     */
+    public static int secondary() {
+        ClickGuiModule gui = ClickGuiModule.getInstance();
+        return rgb(gui == null ? DEFAULT_SECONDARY : gui.secondaryRgb());
+    }
+
+    /**
+     * @param t 0 for the accent, 1 for the secondary color
+     */
+    public static int gradient(float t) {
+        return lerp(accent(), secondary(), t);
+    }
+
+    /**
+     * The gradient flowing over time, {@code offset} shifts it per line or per pixel.
+     */
+    public static int wave(float offset) {
+        double time = System.currentTimeMillis() / 1000.0;
+        float t = (float) (Math.sin(time * 2.0 + offset) * 0.5 + 0.5);
+        return gradient(t);
+    }
+
+    /**
+     * The accent darkened, Ambient draws toggle tracks (x0.62) and slider fills (x0.42) this way.
+     */
+    public static int accentShade(float factor) {
+        return shade(accent(), factor);
+    }
+
+    public static int shade(int abgr, float factor) {
+        int r = Math.round((abgr & 0xFF) * factor);
+        int g = Math.round(((abgr >> 8) & 0xFF) * factor);
+        int b = Math.round(((abgr >> 16) & 0xFF) * factor);
+        return (abgr & 0xFF000000) | b << 16 | g << 8 | r;
     }
 
     /**
@@ -56,56 +118,74 @@ public final class Theme {
         return rgba(argb & 0xFFFFFF, (argb >>> 24) & 0xFF);
     }
 
+    public static int toArgb(int abgr) {
+        int r = abgr & 0xFF, g = (abgr >> 8) & 0xFF, b = (abgr >> 16) & 0xFF, a = (abgr >>> 24) & 0xFF;
+        return a << 24 | r << 16 | g << 8 | b;
+    }
+
+    public static Color toColor(int abgr) {
+        return new Color(toArgb(abgr), true);
+    }
+
     static void apply() {
         ImGuiStyle style = ImGui.getStyle();
         style.setWindowRounding(ROUNDING_LARGE);
         style.setChildRounding(ROUNDING);
-        style.setFrameRounding(6.0f);
+        style.setFrameRounding(ROUNDING);
         style.setPopupRounding(ROUNDING);
         style.setScrollbarRounding(ROUNDING);
-        style.setGrabRounding(6.0f);
-        style.setTabRounding(6.0f);
-        style.setWindowBorderSize(1.0f);
-        style.setChildBorderSize(1.0f);
+        style.setGrabRounding(ROUNDING);
+        style.setTabRounding(ROUNDING);
+        style.setWindowBorderSize(0.0f);
+        style.setChildBorderSize(0.0f);
         style.setFrameBorderSize(0.0f);
         style.setPopupBorderSize(1.0f);
         style.setWindowPadding(14.0f, 14.0f);
         style.setFramePadding(8.0f, 5.0f);
         style.setItemSpacing(8.0f, 7.0f);
         style.setItemInnerSpacing(6.0f, 4.0f);
-        style.setScrollbarSize(8.0f);
+        style.setScrollbarSize(6.0f);
         style.setGrabMinSize(8.0f);
         style.setWindowTitleAlign(0.5f, 0.5f);
 
         color(style, ImGuiCol.Text, TEXT);
         color(style, ImGuiCol.TextDisabled, TEXT_FAINT);
-        color(style, ImGuiCol.WindowBg, BACKGROUND);
-        color(style, ImGuiCol.ChildBg, SURFACE);
-        color(style, ImGuiCol.PopupBg, SURFACE);
+        color(style, ImGuiCol.WindowBg, PANEL);
+        color(style, ImGuiCol.ChildBg, 0);
+        color(style, ImGuiCol.PopupBg, PANEL);
         color(style, ImGuiCol.Border, BORDER);
         color(style, ImGuiCol.BorderShadow, 0);
-        color(style, ImGuiCol.FrameBg, BORDER);
-        color(style, ImGuiCol.FrameBgHovered, MUTED);
-        color(style, ImGuiCol.FrameBgActive, MUTED);
-        color(style, ImGuiCol.TitleBg, BACKGROUND);
-        color(style, ImGuiCol.TitleBgActive, BACKGROUND);
-        color(style, ImGuiCol.TitleBgCollapsed, BACKGROUND);
+        color(style, ImGuiCol.FrameBg, FIELD);
+        color(style, ImGuiCol.FrameBgHovered, FIELD_HOVER);
+        color(style, ImGuiCol.FrameBgActive, FIELD_HOVER);
+        color(style, ImGuiCol.TitleBg, HEADER);
+        color(style, ImGuiCol.TitleBgActive, HEADER);
+        color(style, ImGuiCol.TitleBgCollapsed, HEADER);
         color(style, ImGuiCol.ScrollbarBg, 0);
         color(style, ImGuiCol.ScrollbarGrab, BORDER);
-        color(style, ImGuiCol.ScrollbarGrabHovered, MUTED);
-        color(style, ImGuiCol.ScrollbarGrabActive, ACCENT);
-        color(style, ImGuiCol.CheckMark, ACCENT);
-        color(style, ImGuiCol.SliderGrab, ACCENT);
-        color(style, ImGuiCol.SliderGrabActive, ACCENT_HOVER);
-        color(style, ImGuiCol.Button, BORDER);
-        color(style, ImGuiCol.ButtonHovered, MUTED);
-        color(style, ImGuiCol.ButtonActive, ACCENT);
-        color(style, ImGuiCol.Header, BORDER);
-        color(style, ImGuiCol.HeaderHovered, MUTED);
-        color(style, ImGuiCol.HeaderActive, ACCENT);
+        color(style, ImGuiCol.ScrollbarGrabHovered, TOGGLE_OFF);
+        color(style, ImGuiCol.Button, FIELD);
+        color(style, ImGuiCol.ButtonHovered, FIELD_HOVER);
+        color(style, ImGuiCol.Header, FIELD);
+        color(style, ImGuiCol.HeaderHovered, FIELD_HOVER);
         color(style, ImGuiCol.Separator, BORDER);
-        color(style, ImGuiCol.TextSelectedBg, rgba(0xE662A3, 90));
-        color(style, ImGuiCol.NavHighlight, ACCENT);
+        refresh();
+    }
+
+    /**
+     * Re-applies the accent dependent style colors, the accent can change at any time.
+     */
+    public static void refresh() {
+        ImGuiStyle style = ImGui.getStyle();
+        int accent = accent();
+        color(style, ImGuiCol.ScrollbarGrabActive, accent);
+        color(style, ImGuiCol.CheckMark, accent);
+        color(style, ImGuiCol.SliderGrab, accent);
+        color(style, ImGuiCol.SliderGrabActive, accent);
+        color(style, ImGuiCol.ButtonActive, accentShade(0.62f));
+        color(style, ImGuiCol.HeaderActive, accentShade(0.62f));
+        color(style, ImGuiCol.TextSelectedBg, withAlpha(accent, 0.35f));
+        color(style, ImGuiCol.NavHighlight, accent);
     }
 
     private static void color(ImGuiStyle style, int index, int abgr) {

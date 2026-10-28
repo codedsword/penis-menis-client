@@ -10,6 +10,7 @@ import dev.sinepsinem.features.Feature;
 import dev.sinepsinem.features.commands.Command;
 import dev.sinepsinem.features.commands.MessageSignatures;
 import dev.sinepsinem.features.settings.Bind;
+import dev.sinepsinem.features.settings.EnumConverter;
 import dev.sinepsinem.features.settings.Setting;
 import dev.sinepsinem.manager.ConfigManager;
 import dev.sinepsinem.util.traits.Jsonable;
@@ -32,9 +33,20 @@ public class Module extends Feature implements Jsonable, Toggleable {
 
     public Module(String name, String description, Category category) {
         super(name);
-        this.displayName = str("DisplayName", name);
+        this.displayName = str("DisplayName", spaced(name));
         this.description = description;
         this.category = category;
+    }
+
+    // KillAura -> Kill Aura, ESP stays ESP, how Ambient shows module and setting names
+    public static String spaced(String name) {
+        StringBuilder spaced = new StringBuilder();
+        for (int i = 0; i < name.length(); i++) {
+            char c = name.charAt(i);
+            if (i > 0 && Character.isUpperCase(c) && Character.isLowerCase(name.charAt(i - 1))) spaced.append(' ');
+            spaced.append(c);
+        }
+        return spaced.toString();
     }
 
     public void onEnable() {
@@ -61,7 +73,15 @@ public class Module extends Feature implements Jsonable, Toggleable {
     public void onUnload() {
     }
 
+    /**
+     * @return the suffix after the name in the array list, the "Mode" setting by default
+     */
     public String getDisplayInfo() {
+        for (Setting<?> setting : getSettings()) {
+            if (setting.getName().equals("Mode") && setting.getValue() instanceof Enum<?> mode) {
+                return EnumConverter.getProperName(mode);
+            }
+        }
         return null;
     }
 
@@ -184,12 +204,14 @@ public class Module extends Feature implements Jsonable, Toggleable {
 
     public enum Category {
         COMBAT("Combat"),
-        MISC("Misc"),
-        RENDER("Render"),
+        GHOST("Ghost"),
         MOVEMENT("Movement"),
+        RENDER("Render"),
         PLAYER("Player"),
+        MISC("Misc"),
         CLIENT("Client"),
-        HUD("Hud");
+        HUD("Hud"),
+        SCRIPTS("Scripts");
 
         private final String name;
 

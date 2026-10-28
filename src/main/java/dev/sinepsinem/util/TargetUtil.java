@@ -1,6 +1,7 @@
 package dev.sinepsinem.util;
 
 import dev.sinepsinem.features.modules.misc.AntiBotModule;
+import dev.sinepsinem.features.modules.misc.TeamsModule;
 import dev.sinepsinem.util.traits.Util;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -42,6 +43,7 @@ public final class TargetUtil implements Util {
         double rangeSq = range * range;
         return StreamSupport.stream(mc.level.entitiesForRendering().spliterator(), false)
                 .filter(e -> isValidTarget(e, players, hostiles, passives))
+                .filter(e -> !(e instanceof Player player && TeamsModule.isTeammate(player)))
                 .filter(e -> mc.player.getEyePosition().distanceToSqr(MathUtil.clamp(mc.player.getEyePosition(), e.getBoundingBox())) <= rangeSq)
                 .map(e -> (LivingEntity) e)
                 .sorted(comparator(priority))

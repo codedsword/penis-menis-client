@@ -1,126 +1,114 @@
 package dev.sinepsinem.features.modules.hud;
 
 import dev.sinepsinem.SinepSinem;
-import dev.sinepsinem.event.impl.render.Render2DEvent;
 import dev.sinepsinem.features.modules.Module;
-import dev.sinepsinem.features.modules.client.HudModule;
 import dev.sinepsinem.features.settings.Setting;
-import dev.sinepsinem.util.text.Fonts;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.util.ARGB;
-import net.minecraft.util.Mth;
+import dev.sinepsinem.util.imgui.ImGuiImpl;
+import dev.sinepsinem.util.imgui.Theme;
+import imgui.ImDrawList;
+import imgui.ImFont;
 import org.joml.Vector2f;
 
-import java.awt.Color;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**
- * Enabled modules sorted by width, sliding in and out, in SF Pro.
+ * Ambient's array list: enabled modules sorted by width, the name in the theme gradient flowing
+ * down the list, the mode in light gray after it, a bar along the screen edge and optionally a
+ * dark strip behind every line. Lines slide in and out.
  */
-public class ArrayListHudModule extends HudModule {
-    private final Setting<Color> startColor = color("StartColor", 230, 98, 163, 255);
-    private final Setting<Color> endColor = color("EndColor", 140, 82, 255, 255);
-    private final Setting<Float> speed = num("WaveSpeed", 1.0f, 0.1f, 5.0f);
+public class ArrayListHudModule extends ImGuiHudModule {
     private final Setting<Boolean> background = bool("Background", true);
     private final Setting<Boolean> bar = bool("Bar", true);
     private final Setting<Boolean> info = bool("Info", true);
+    private final Setting<Boolean> lowercase = bool("Lowercase", false);
+    private final Setting<Boolean> small = bool("Small", false);
+    private final Setting<Float> speed = num("WaveSpeed", 1.0f, 0.1f, 5.0f);
 
     private final Map<Module, Float> animations = new HashMap<>();
     private long lastFrame = System.nanoTime();
 
     public ArrayListHudModule() {
         super("ArrayList", "Lists enabled modules", 80, 10);
-        pos.setValue(new Vector2f(0.88f, 0.01f));
+        pos.setValue(new Vector2f(0.88f, 0.004f));
     }
 
     @Override
-    protected void render(Render2DEvent e) {
-        super.render(e);
-        GuiGraphicsExtractor graphics = e.getContext();
-
+    protected float[] draw(ImDrawList draw, float x, float y) {
         long now = System.nanoTime();
         float dt = Math.min((now - lastFrame) / 1.0E9f, 0.1f);
         lastFrame = now;
 
         for (Module module : SinepSinem.moduleManager.getModules()) {
-            boolean visible = module.isEnabled() && module.isDrawn() && !module.hidden && module.getCategory() != Category.HUD
-                    && module.getCategory() != Category.CLIENT;
+            boolean visible = module.isEnabled() && module.isDrawn() && !module.hidden
+                    && module.getCategory() != Module.Category.HUD && module.getCategory() != Module.Category.CLIENT;
             float current = animations.getOrDefault(module, 0f);
-            float target = visible ? 1f : 0f;
-            animations.put(module, current + (target - current) * Math.min(1f, dt * 12f));
+            animations.put(module, current + ((visible ? 1f : 0f) - current) * Math.min(1f, dt * 12f));
         }
 
+        ImFont font = small.getValue() ? ImGuiImpl.small : ImGuiImpl.regular;
         List<Module> shown = animations.entrySet().stream()
                 .filter(entry -> entry.getValue() > 0.01f)
                 .map(Map.Entry::getKey)
-                .sorted(Comparator.comparingInt((Module m) -> mc.font.width(label(m))).reversed())
+                .sorted(Comparator.comparingDouble((Module m) -> width(font, name(m) + suffix(m))).reversed())
                 .toList();
 
-        float screenWidth = mc.getWindow().getGuiScaledWidth();
-        boolean right = getX() + getWidth() / 2 > screenWidth / 2f;
-        float anchorX = right ? Math.min(getX() + getWidth(), screenWidth - 2) : getX();
-        float y = getY();
-        int lineHeight = 12;
-        int maxWidth = 40;
+        float screenWidth = mc.getWindow().getWidth();
+        boolean right = x + getWidth() * scale / 2 > screenWidth / 2;
+        float anchor = right ? Math.min(x + getWidth() * scale, screenWidth - 2) : x;
+        float lineHeight = font.getFontSize() + 4, padding = 5, maxWidth = 60;
+        float cy = y;
 
         for (int i = 0; i < shown.size(); i++) {
             Module module = shown.get(i);
             float anim = animations.get(module);
-            Component text = label(module);
-            int textWidth = mc.font.width(text);
-            maxWidth = Math.max(maxWidth, textWidth + 8);
+            float ease = 1 - (1 - anim) * (1 - anim) * (1 - anim);
+            String name = name(module), suffix = suffix(module);
+            float nameWidth = width(font, name), textWidth = nameWidth + width(font, suffix);
+            float rowWidth = textWidth + padding * 2 + (bar.getValue() ? 2 : 0);
+            maxWidth = Math.max(maxWidth, rowWidth);
 
-            float slide = (1 - easeOutCubic(anim)) * (textWidth + 10);
-            float x = right ? anchorX - textWidth - 6 + slide : anchorX + 2 - slide;
-            int color = wave(i);
-            int alpha = Math.round(255 * anim);
+            float slide = (1 - ease) * (rowWidth + 10);
+            float rx = right ? anchor - rowWidth + slide : anchor - slide;
+            float h = lineHeight * ease;
+            int color = Theme.withAlpha(Theme.wave(i * 0.35f * speed.getValue() + timeOffset()), anim);
 
             if (background.getValue()) {
-                graphics.fill(Math.round(x - 3), Math.round(y), Math.round(x + textWidth + 3), Math.round(y + lineHeight * anim),
-                        ARGB.color(Math.round(150 * anim), 0x101010));
+                draw.addRectFilled(rx, cy, rx + rowWidth, cy + h, Theme.rgba(0x000000, Math.round(105 * anim)));
             }
             if (bar.getValue()) {
-                int barX = right ? Math.round(x + textWidth + 3) : Math.round(x - 4);
-                graphics.fill(barX, Math.round(y), barX + 1, Math.round(y + lineHeight * anim), ARGB.color(alpha, color));
+                float bx = right ? rx + rowWidth - 2 : rx;
+                draw.addRectFilled(bx, cy, bx + 2, cy + h, color);
             }
-            graphics.text(mc.font, text, Math.round(x), Math.round(y + 2), ARGB.color(alpha, color), false);
-            y += lineHeight * anim;
+            float tx = rx + padding + (bar.getValue() && !right ? 2 : 0), ty = cy + (h - font.getFontSize()) / 2;
+            text(draw, font, tx, ty, color, name);
+            if (!suffix.isEmpty()) text(draw, font, tx + nameWidth, ty, Theme.withAlpha(Theme.rgb(0xD0D0D0), anim), suffix);
+            cy += h;
         }
 
-        if (right && maxWidth != getWidth()) {
+        if (right && Math.abs(maxWidth / scale - getWidth()) > 0.01f) {
             // keep the right edge in place while the list grows or shrinks
-            pos.setValueNoEvent(new Vector2f((anchorX - maxWidth) / screenWidth, pos.getValue().y()));
+            float newX = (anchor - maxWidth) / scale;
+            pos.setValueNoEvent(new Vector2f(newX / mc.getWindow().getGuiScaledWidth(), pos.getValue().y()));
         }
-        setWidth(maxWidth);
-        setHeight(Math.max(10, y - getY()));
+        return new float[]{maxWidth, Math.max(lineHeight, cy - y)};
     }
 
-    private Component label(Module module) {
-        MutableComponent text = Fonts.text(module.getDisplayName());
-        String extra = module.getDisplayInfo();
-        if (info.getValue() && extra != null) {
-            text.append(Fonts.text(" " + extra).withColor(0xFF8A8A8A));
-        }
-        return text;
+    private float timeOffset() {
+        return (float) (System.currentTimeMillis() / 1000.0 * (speed.getValue() - 1));
     }
 
-    private int wave(int index) {
-        double time = System.currentTimeMillis() / 1000.0 * speed.getValue();
-        float t = (float) (Math.sin(time * 2 + index * 0.35) * 0.5 + 0.5);
-        Color a = startColor.getValue(), b = endColor.getValue();
-        return ARGB.color(
-                Mth.lerpInt(t, a.getRed(), b.getRed()),
-                Mth.lerpInt(t, a.getGreen(), b.getGreen()),
-                Mth.lerpInt(t, a.getBlue(), b.getBlue()));
+    private String name(Module module) {
+        String name = module.getDisplayName();
+        return lowercase.getValue() ? name.toLowerCase(Locale.ROOT) : name;
     }
 
-    private static float easeOutCubic(float t) {
-        float f = 1 - t;
-        return 1 - f * f * f;
+    private String suffix(Module module) {
+        String extra = info.getValue() ? module.getDisplayInfo() : null;
+        if (extra == null || extra.isEmpty()) return "";
+        return " " + (lowercase.getValue() ? extra.toLowerCase(Locale.ROOT) : extra);
     }
 }
